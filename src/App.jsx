@@ -8,8 +8,9 @@ import { useState, useEffect, useCallback, useRef, createContext, useContext } f
 import { Bell, MessageCircle, Home, CalendarDays, Compass, User,
          Send, Link, X, Check, ArrowLeft, Sparkles, ChefHat,
          Clock, Flame, Leaf, ShoppingCart, Mic, MicOff,
-         ChevronDown, MoreHorizontal, Play, Pause, RotateCcw,
-         TrendingUp, Star, Award, Dumbbell, Wheat, Droplets } from "lucide-react";
+         ChevronDown, MoreHorizontal, Play, Pause, RotateCcw, RefreshCw,
+         Heart, TrendingUp, Star, Award, Dumbbell, Wheat, Droplets,
+         Sunrise, Moon, Sun, Video, ClipboardList, ShoppingBasket, Utensils, Zap } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // src/store/ThemeContext  — Global Theme (Healthy Green + Action Orange)
@@ -498,14 +499,16 @@ function GhostBtn({ children, onClick, small, color }) {
 // src/components/DifficultyBadge
 // ─────────────────────────────────────────────────────────────────────────────
 function DiffBadge({ d }) {
-  const map = { easy:{ e:"👨‍🍳", l:"Fácil",   bg:T.greenPale, c:T.greenMid },
-                medium:{ e:"👩‍🍳", l:"Medio", bg:T.yellowPale, c:"#92700A" },
-                hard:{ e:"👨‍🔬", l:"Difícil",   bg:T.redPale,   c:T.red } };
-  const { e,l,bg,c } = map[d] || map.easy;
+  const map = { easy:{ l:"Fácil",   bg:T.greenPale, c:T.greenMid },
+                medium:{ l:"Medio", bg:T.yellowPale, c:"#92700A" },
+                hard:{ l:"Difícil",   bg:T.redPale,   c:T.red } };
+  const { l,bg,c } = map[d] || map.easy;
   return (
     <span style={{ display:"inline-flex", alignItems:"center", gap:4,
       background:bg, color:c, padding:"3px 10px", borderRadius:99,
-      fontSize:11, fontWeight:700, letterSpacing:0.2 }}>{e} {l}</span>
+      fontSize:11, fontWeight:700, letterSpacing:0.2 }}>
+      <ChefHat size={12} color={c} strokeWidth={2}/> {l}
+    </span>
   );
 }
 
@@ -697,8 +700,9 @@ function RecipeCard({ recipe, onPress, showSwap, onSwap }) {
             background:"linear-gradient(to top, rgba(0,0,0,0.6), transparent 55%)" }} />
           <div style={{ position:"absolute", bottom:10, left:12 }}>
             <span style={{ background:"rgba(0,0,0,0.5)", color:"#fff", padding:"3px 9px",
-              borderRadius:99, fontSize:12, fontWeight:600, backdropFilter:"blur(4px)" }}>
-              ⏱ {recipe.time}
+              borderRadius:99, fontSize:12, fontWeight:600, backdropFilter:"blur(4px)",
+              display:"inline-flex", alignItems:"center", gap:4 }}>
+              <Clock size={10} color="#fff" strokeWidth={2}/> {recipe.time}
             </span>
           </div>
           {showSwap && (
@@ -715,7 +719,9 @@ function RecipeCard({ recipe, onPress, showSwap, onSwap }) {
         <div style={{ padding:"11px 14px 13px" }}>
           <div style={{ fontSize:14, fontWeight:700, color:T.ink, marginBottom:2,
             overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{recipe.name}</div>
-          <span style={{ fontSize:12, color:T.inkLight }}>🔥 {recipe.cal} cal</span>
+          <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+            <Flame size={11} color={T.orange} strokeWidth={2}/><span style={{ fontSize:12, color:T.inkLight }}>{recipe.cal} cal</span>
+          </div>
         </div>
       </div>
       {/* Contextual actions — progressive disclosure */}
@@ -728,16 +734,53 @@ function RecipeCard({ recipe, onPress, showSwap, onSwap }) {
             style={{ display:"flex", alignItems:"center", gap:10, width:"100%",
               padding:"13px 16px", border:"none", background:"none", cursor:"pointer",
               fontSize:13, fontWeight:600, color:T.ink, borderBottom:`1px solid ${T.border}` }}>
-            🔄 Cambiar receta
+            <RefreshCw size={14} color={T.inkMid} strokeWidth={2}/> Cambiar receta
           </button>
           <button onClick={()=>setMenuOpen(false)}
             style={{ display:"flex", alignItems:"center", gap:10, width:"100%",
               padding:"13px 16px", border:"none", background:"none",
               cursor:"pointer", fontSize:13, fontWeight:600, color:T.ink }}>
-            ❤️ Guardar favorito
+            <Heart size={14} color={T.red} strokeWidth={2}/> Guardar favorito
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MarqueeText — scrolls text horizontally when it overflows its container
+// ─────────────────────────────────────────────────────────────────────────────
+function MarqueeText({ text, style }) {
+  const outerRef = useRef(null);
+  const innerRef = useRef(null);
+  const [dist, setDist] = useState(0);
+
+  useEffect(() => {
+    if (!outerRef.current || !innerRef.current) return;
+    const overflow = innerRef.current.scrollWidth - outerRef.current.clientWidth;
+    setDist(overflow > 4 ? -(overflow + 12) : 0);
+  }, [text]);
+
+  const duration = Math.max(2.5, Math.abs(dist) / 40);
+
+  return (
+    <div ref={outerRef} style={{ overflow:"hidden", whiteSpace:"nowrap" }}>
+      <span
+        ref={innerRef}
+        style={{
+          ...style,
+          display:"inline-block",
+          whiteSpace:"nowrap",
+          animation: dist !== 0
+            ? `taskMarquee ${duration}s ease-in-out infinite alternate`
+            : "none",
+          "--marquee-dist": `${dist}px`,
+        }}
+      >
+        {text}
+      </span>
     </div>
   );
 }
@@ -818,7 +861,7 @@ function PrepTaskRow({ task, onComplete, onDismiss, onUncomplete, showHint }) {
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
         style={{ position:"relative", background: done ? T.greenPale : T.card,
           borderRadius:16, padding:"12px 14px",
-          border:`1.5px solid ${done ? T.green+"60" : "#8faaa8"}`,
+          border:`1px solid ${done ? T.green+"60" : T.border}`,
           transform:`translateX(${offset}px)`,
           transition: dragging ? "none" : "transform 0.35s cubic-bezier(0.34,1.56,0.64,1), background 0.3s",
           cursor:"grab", userSelect:"none", touchAction:"none",
@@ -856,9 +899,13 @@ function PrepTaskRow({ task, onComplete, onDismiss, onUncomplete, showHint }) {
         ) : null}
 
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:14, fontWeight:600, color:T.ink,
-            textDecoration: done ? "line-through" : "none",
-            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{task.text}</div>
+          <div style={{ overflow:"hidden", whiteSpace:"nowrap" }}>
+            <MarqueeText
+              text={task.text}
+              style={{ fontSize:14, fontWeight:600, color:T.ink,
+                textDecoration: done ? "line-through" : "none" }}
+            />
+          </div>
           <div style={{ fontSize:12, color:T.inkLight, marginTop:1 }}>{task.time}</div>
         </div>
 
@@ -907,32 +954,55 @@ function MacrosBar() {
     { l:"Carbos", v:"198g",  Icon: Wheat },
   ];
   return (
-    <div style={{ display:"flex", gap:6, marginBottom:14 }}>
-      {macros.map(m => (
-        <div key={m.l} style={{ flex:1, background:T.greenPale, borderRadius:R.L,
-          padding:"7px 4px", textAlign:"center" }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"center",
-            gap:3, marginBottom:2 }}>
-            <m.Icon size={13} color={T.green} strokeWidth={2}/>
-            <span style={{ fontSize:9, fontWeight:700, color:T.greenMid }}>{m.l}</span>
+    <div style={{ marginBottom:14 }}>
+      <span style={{ fontSize:11, fontWeight:700, color:T.inkLight,
+        textTransform:"uppercase", letterSpacing:0.6, marginBottom:6,
+        display:"block" }}>Tus macros del día</span>
+      <div style={{ display:"flex", gap:6 }}>
+        {macros.map(m => (
+          <div key={m.l} style={{ flex:1, background:T.card, borderRadius:R.L,
+            padding:"10px 4px", textAlign:"center", position:"relative",
+            overflow:"hidden", border:`1px solid ${T.border}` }}>
+            {/* Background watermark icon */}
+            <div style={{ position:"absolute", bottom:-4, right:2, opacity:0.12, pointerEvents:"none" }}>
+              <m.Icon size={38} color={T.green} strokeWidth={1.5}/>
+            </div>
+            <span style={{ fontSize:9, fontWeight:700, color:T.inkLight,
+              textTransform:"uppercase", letterSpacing:0.5, display:"block", marginBottom:2 }}>{m.l}</span>
+            <div style={{ fontSize:13, fontWeight:800, color:T.green }}>{m.v}</div>
           </div>
-          <div style={{ fontSize:12, fontWeight:800, color:T.green }}>{m.v}</div>
-        </div>
-      ))}
-      <div style={{ flex:1, background: waterFlip ? T.orangePale : T.greenPale,
-        borderRadius:R.L, padding:"7px 4px", textAlign:"center",
-        transition:"background 0.5s ease",
-        border:`1px solid ${waterFlip ? T.orange+"50" : T.greenPale}` }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center",
-          gap:3, marginBottom:2 }}>
-          <Droplets size={13} color={waterFlip ? T.orange : T.green} strokeWidth={2}/>
-          <span style={{ fontSize:9, fontWeight:700,
-            color: waterFlip ? T.orange : T.greenMid }}>Agua</span>
-        </div>
-        <div style={{ fontSize: waterFlip ? 9 : 12, fontWeight:800,
-          color: waterFlip ? T.orange : T.green,
-          transition:"all 0.4s ease", lineHeight:1.2 }}>
-          {waterFlip ? "toma un poco más" : "1.8L"}
+        ))}
+        {/* Water card — same fixed height as others */}
+        <div style={{ flex:1, background: waterFlip ? T.orangePale : T.card,
+          borderRadius:R.L, padding:"10px 4px", textAlign:"center",
+          position:"relative", overflow:"hidden",
+          border:`1px solid ${waterFlip ? T.orange+"40" : T.border}`,
+          transition:"background 0.5s ease, border 0.5s ease",
+          display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center" }}>
+          {/* Background watermark icon */}
+          <div style={{ position:"absolute", bottom:-4, right:2, opacity:0.12, pointerEvents:"none",
+            transition:"opacity 0.4s ease" }}>
+            <Droplets size={38} color={waterFlip ? T.orange : T.green} strokeWidth={1.5}/>
+          </div>
+          {/* Normal state: label + value */}
+          <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center",
+            opacity: waterFlip ? 0 : 1, transition:"opacity 0.3s ease", pointerEvents:"none" }}>
+            <span style={{ fontSize:9, fontWeight:700, color:T.inkLight,
+              textTransform:"uppercase", letterSpacing:0.5, marginBottom:2 }}>Agua</span>
+            <div style={{ fontSize:13, fontWeight:800, color:T.green }}>1.8L</div>
+          </div>
+          {/* Flipped state: reminder text */}
+          <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center",
+            justifyContent:"center", padding:"0 6px",
+            opacity: waterFlip ? 1 : 0, transition:"opacity 0.3s ease", pointerEvents:"none" }}>
+            <span style={{ fontSize:9.5, fontWeight:800, color:T.inkMid, lineHeight:1.3,
+              textAlign:"center" }}>toma un poco más</span>
+          </div>
+          {/* Spacer to maintain height */}
+          <div style={{ visibility:"hidden", fontSize:9 }}>Agua</div>
+          <div style={{ visibility:"hidden", fontSize:13, fontWeight:800 }}>1.8L</div>
         </div>
       </div>
     </div>
@@ -941,14 +1011,26 @@ function MacrosBar() {
 
 // src/screens/HomeScreen
 // ─────────────────────────────────────────────────────────────────────────────
-function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, onOpenConfirm, cookedMeals, userProfile, onGoToChat }) {
+function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, onOpenConfirm, cookedMeals, userProfile, onGoToChat, scrollToPrep, onScrollDone }) {
   const [statsOpen,  setStatsOpen]  = useState(false);
   const [tasks,      setTasks]      = useState(PREP_TASKS_INIT);
   const [mood,       setMood]       = useState("");
+  const prepSectionRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const today     = plan[0];
   const heroRecipe = today.lunch;
   const completed = tasks.filter(t => t._done).length;
   const userName  = userProfile?.name || "tú";
+
+  // Scroll to prep section when triggered by notification click
+  useEffect(() => {
+    if (scrollToPrep && prepSectionRef.current && scrollContainerRef.current) {
+      setTimeout(() => {
+        prepSectionRef.current?.scrollIntoView({ behavior:"smooth", block:"start" });
+        onScrollDone?.();
+      }, 120);
+    }
+  }, [scrollToPrep]);
 
   const completeTask   = id => setTasks(t => t.map(x => x.id===id ? {...x, _done:true}  : x));
   const uncompleteTask = id => setTasks(t => t.map(x => x.id===id ? {...x, _done:false} : x));
@@ -1020,7 +1102,7 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
           {/* Greeting + name — strong typographic hierarchy */}
           <div>
             <p style={{ margin:0, color:"rgba(255,255,255,0.7)", fontSize:12, fontWeight:600,
-              letterSpacing:0.2, lineHeight:1.4 }}>{greeting} 👋</p>
+              letterSpacing:0.2, lineHeight:1.4 }}>{greeting}</p>
             <p style={{ margin:0, color:"#fff", fontSize:24, fontWeight:800,
               letterSpacing:-0.5, lineHeight:1.05 }}>{userName}</p>
           </div>
@@ -1070,23 +1152,170 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
         </div>
       </div>
 
-      {/* Stats drawer (bell tap) */}
-      <div style={{ maxHeight: statsOpen ? 120 : 0, overflow:"hidden",
-        transition:"max-height 0.4s cubic-bezier(0.4,0,0.2,1)" }}>
-        <div style={{ display:"flex", gap:10, padding:"12px 16px",
-          background:T.card, borderBottom:`1px solid ${T.border}` }}>
-          {stats.map(s => (
-            <div key={s.label} style={{ flex:1, textAlign:"center", padding:"10px 6px",
-              background:T.surface, borderRadius:R.L, border:`1px solid #8faaa8` }}>
-              <div style={{ fontSize:18 }}>{s.icon}</div>
-              <div style={{ fontSize:16, fontWeight:800, color:s.color }}>{s.val}</div>
-              <div style={{ fontSize:12, color:T.inkLight, fontWeight:600 }}>{s.label}</div>
+      {/* Notification overlay (bell tap) */}
+      {statsOpen && (
+        <div style={{ position:"absolute", inset:0, zIndex:180, display:"flex",
+          flexDirection:"column", justifyContent:"flex-end" }}>
+          {/* Backdrop */}
+          <div onClick={()=>setStatsOpen(false)}
+            style={{ position:"absolute", inset:0, background:"rgba(13,31,31,0.45)",
+              backdropFilter:"blur(3px)" }} />
+          {/* Panel */}
+          <div style={{ position:"relative", background:T.surface, borderRadius:"24px 24px 0 0",
+            padding:"0 0 32px", boxShadow:"0 -12px 40px rgba(0,0,0,0.18)",
+            animation:"slideUp 0.32s cubic-bezier(0.34,1.56,0.64,1)",
+            maxHeight:"75%", display:"flex", flexDirection:"column" }}>
+            {/* Handle */}
+            <div style={{ width:36, height:4, borderRadius:99, background:T.border,
+              margin:"12px auto 0" }} />
+            {/* Header */}
+            <div style={{ padding:"14px 20px 10px", display:"flex",
+              justifyContent:"space-between", alignItems:"center",
+              borderBottom:`1px solid ${T.border}` }}>
+              <span style={{ fontSize:16, fontWeight:800, color:T.ink }}>Notificaciones</span>
+              <button onClick={()=>setStatsOpen(false)}
+                style={{ background:"none", border:"none", cursor:"pointer",
+                  color:T.inkLight, fontSize:22, lineHeight:1, padding:"0 4px" }}>×</button>
             </div>
-          ))}
-        </div>
-      </div>
+            {/* Scrollable list */}
+            <div style={{ overflowY:"auto", flex:1 }}>
 
-      <div style={{ padding:"20px 16px 110px" }}>
+              {/* Pending tasks section */}
+              {tasks.filter(t=>!t._done).length > 0 && (
+                <div style={{ padding:"14px 20px 0" }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:T.inkLight,
+                    textTransform:"uppercase", letterSpacing:0.7 }}>
+                    Tareas pendientes
+                  </span>
+                  <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:8 }}>
+                    {tasks.filter(t=>!t._done).map(task => {
+                      const dot = { high:T.red, med:T.orange, low:T.inkLight };
+                      return (
+                        <div key={task.id} style={{ display:"flex", alignItems:"center", gap:10,
+                          background:T.card, borderRadius:R.L, padding:"10px 12px",
+                          border:`1px solid ${T.border}` }}>
+                          <div style={{ width:8, height:8, borderRadius:99,
+                            background:dot[task.priority], flexShrink:0 }} />
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:13, fontWeight:700, color:T.ink,
+                              overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                              {task.text}
+                            </div>
+                            <div style={{ fontSize:11, color:T.inkLight, marginTop:1 }}>
+                              {task.time}
+                            </div>
+                          </div>
+                          <span style={{ fontSize:10, fontWeight:700, color:T.inkLight,
+                            background:T.surfaceVar, borderRadius:99, padding:"2px 8px",
+                            flexShrink:0 }}>
+                            {task.priority === "high" ? "Alta" : task.priority === "med" ? "Media" : "Baja"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed tasks section */}
+              {tasks.filter(t=>t._done).length > 0 && (
+                <div style={{ padding:"14px 20px 0" }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:T.inkLight,
+                    textTransform:"uppercase", letterSpacing:0.7 }}>
+                    Completado hoy ✓
+                  </span>
+                  <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:8 }}>
+                    {tasks.filter(t=>t._done).map(task => (
+                      <div key={task.id} style={{ display:"flex", alignItems:"center", gap:10,
+                        background:T.greenGhost, borderRadius:R.L, padding:"10px 12px",
+                        border:`1px solid ${T.green}30` }}>
+                        <div style={{ width:20, height:20, borderRadius:99,
+                          background:T.green, display:"flex", alignItems:"center",
+                          justifyContent:"center", flexShrink:0 }}>
+                          <span style={{ color:"#fff", fontSize:11, fontWeight:800 }}>✓</span>
+                        </div>
+                        <span style={{ fontSize:13, fontWeight:600, color:T.inkLight,
+                          textDecoration:"line-through", flex:1,
+                          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {task.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cooked meals */}
+              {Object.keys(cookedMeals||{}).length > 0 && (
+                <div style={{ padding:"14px 20px 0" }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:T.inkLight,
+                    textTransform:"uppercase", letterSpacing:0.7 }}>
+                    Comidas cocinadas
+                  </span>
+                  <div style={{ display:"flex", gap:8, marginTop:8, flexWrap:"wrap" }}>
+                    {Object.keys(cookedMeals).map(key => {
+                      const [dayIdx, slot] = key.split("-");
+                      const recipe = plan[Number(dayIdx)]?.[slot];
+                      if (!recipe) return null;
+                      const slotIcon = slot==="breakfast"?"☀️":slot==="lunch"?"🌤":"🌙";
+                      return (
+                        <div key={key} style={{ background:T.greenGhost, borderRadius:R.L,
+                          padding:"6px 10px", border:`1px solid ${T.green}30`,
+                          fontSize:12, fontWeight:700, color:T.green }}>
+                          {slotIcon} {recipe.name}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Goals progress */}
+              <div style={{ padding:"14px 20px 0" }}>
+                <span style={{ fontSize:11, fontWeight:700, color:T.inkLight,
+                  textTransform:"uppercase", letterSpacing:0.7 }}>
+                  Tu semana en números
+                </span>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:8 }}>
+                  {[
+                    { icon:"🔥", label:"Racha activa", val:"14 días", color:T.orange },
+                    { icon:"✅", label:"Meta semanal", val:"87%", color:T.green },
+                    { icon:"🍽", label:"Comidas plan.", val:`${Object.keys(plan).length * 2}/14`, color:T.green },
+                    { icon:"⚡", label:"Cal. promedio", val:"1,840 kcal", color:T.orange },
+                  ].map(item => (
+                    <div key={item.label} style={{ background:T.card, borderRadius:R.L,
+                      padding:"10px 12px", border:`1px solid ${T.border}`,
+                      display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:20 }}>{item.icon}</span>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:800, color:item.color }}>{item.val}</div>
+                        <div style={{ fontSize:10, color:T.inkLight, fontWeight:600 }}>{item.label}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* All clear state */}
+              {tasks.filter(t=>!t._done).length === 0 && Object.keys(cookedMeals||{}).length === 0 && (
+                <div style={{ padding:"32px 20px", textAlign:"center" }}>
+                  <div style={{ fontSize:40, marginBottom:8 }}>🌿</div>
+                  <div style={{ fontSize:15, fontWeight:700, color:T.ink, marginBottom:4 }}>
+                    Todo en orden
+                  </div>
+                  <div style={{ fontSize:13, color:T.inkLight }}>
+                    No tienes tareas pendientes por ahora
+                  </div>
+                </div>
+              )}
+
+              <div style={{ height:16 }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div ref={scrollContainerRef} style={{ padding:"20px 16px 130px" }}>
 
 
         {/* Weekly progress — positive sunk cost + Fundamental Attribution Error empathy */}
@@ -1119,7 +1348,7 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
           <div style={{ fontSize:11, fontWeight:800, color:T.inkLight,
             textTransform:"uppercase", letterSpacing:1, marginBottom:8,
             display:"flex", alignItems:"center", gap:8 }}>
-            ☀️ Mañana cocinarás
+            <Sun size={13} color={T.inkLight} strokeWidth={2}/> El almuerzo de mañana será:
             {cookedMeals?.["0-lunch"] && (
               <span style={{ background:T.green, color:"#fff", fontSize:12,
                 fontWeight:800, padding:"2px 8px", borderRadius:99 }}>✅ Cocinado</span>
@@ -1134,9 +1363,6 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
                 <div style={{ position:"absolute", inset:0,
                   background:"linear-gradient(to top, rgba(13,31,31,0.75) 0%, transparent 55%)" }}/>
                 <div style={{ position:"absolute", bottom:14, left:16, right:16 }}>
-                  <p style={{ margin:"0 0 4px", color:"rgba(255,255,255,0.75)", fontSize:12, fontWeight:600 }}>
-                    Ideal para preparar mañana
-                  </p>
                   <h2 style={{ margin:"0 0 8px", color:"#fff", fontSize:20, fontWeight:800,
                     fontFamily:"'DM Sans', sans-serif",
                     textShadow:"0 2px 12px rgba(0,0,0,0.55)", letterSpacing:-0.2 }}>{heroRecipe.name}</h2>
@@ -1149,15 +1375,11 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
                     </span>
                   </div>
                 </div>
-                <button onClick={e=>{e.stopPropagation();onSwap(0,"lunch");}}
-                  style={{ position:"absolute", top:10, right:10, background:"rgba(255,255,255,0.92)",
-                    border:"none", borderRadius:R.pill, width:32, height:32, fontSize:15, cursor:"pointer",
-                    display:"flex", alignItems:"center", justifyContent:"center", boxShadow:EL.S }}>🔄</button>
               </div>
               {/* Ingredient status */}
               <div style={{ padding:"10px 16px 0", display:"flex", alignItems:"center", gap:6 }}>
                 <span style={{ fontSize:13, color:T.green, fontWeight:600 }}>
-                  Ya tienes todo listo para mañana ✨
+                  Ya tienes todo listo para mañana
                 </span>
               </div>
               <div style={{ padding:"10px 16px 14px" }}>
@@ -1169,9 +1391,9 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
 
         {/* Secondary meals */}
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
-          {[{slot:"breakfast",label:"🌅 También planeaste desayuno"},{slot:"dinner",label:"🌙 Cena sugerida para hoy"}]
+          {[{slot:"breakfast",label:"DESAYUNO",icon:null},{slot:"dinner",label:"CENA",icon:<Moon size={11} color={T.inkLight} strokeWidth={2}/>}]
             .filter(({slot}) => !!today[slot])          // ← skip null slots
-            .map(({slot,label})=>{
+            .map(({slot,label,icon})=>{
             const r = today[slot];
             return (
               <div key={slot} onClick={()=>onOpenRecipe(r,0,slot)} style={{ background:T.card,
@@ -1183,10 +1405,13 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:T.inkLight,
-                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:2 }}>{label}</div>
+                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:2,
+                    display:"flex", alignItems:"center", gap:4 }}>{icon}{label}</div>
                   <div style={{ fontSize:13, fontWeight:700, color:T.ink,
                     overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.name}</div>
-                  <div style={{ fontSize:11, color:T.inkLight }}>🔥 {r.cal} cal · ⏱ {r.time}</div>
+                  <div style={{ fontSize:11, color:T.inkLight, display:"flex", alignItems:"center", gap:4 }}>
+                    <Flame size={11} color={T.orange} fill={T.orange} strokeWidth={0}/> {r.cal} cal · <Clock size={11} color={T.inkLight} strokeWidth={2}/> {r.time}
+                  </div>
                 </div>
                 {cookedMeals?.[`0-${slot}`] && (
                   <span style={{ background:T.green, color:"#fff", fontSize:12,
@@ -1202,7 +1427,7 @@ function HomeScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRecipe, o
         <MacrosBar />
 
         {/* Prep section */}
-        <div style={{ background:T.card, borderRadius:R.XL, overflow:"hidden",
+        <div ref={prepSectionRef} style={{ background:T.card, borderRadius:R.XL, overflow:"hidden",
           border:`1px solid ${T.border}`, boxShadow:EL.S, marginBottom:16 }}>
           <div style={{ padding:"14px 16px", borderBottom:`1px solid ${T.border}`,
             display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -1338,36 +1563,34 @@ function WeeklyPlanScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRec
       {/* Header */}
       <div style={{ background:T.green,
         padding:"52px 20px 0", flexShrink:0 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-          <div>
+          <div style={{ marginBottom:12 }}>
             <h1 style={{ margin:"0 0 2px", color:"#fff", fontSize:24, fontWeight:400,
               fontFamily:"'DM Sans', sans-serif", letterSpacing:0.2 }}>Tu semana</h1>
             <p style={{ margin:0, color:"rgba(255,255,255,0.75)", fontSize:12 }}>
-              Organiza tus comidas antes de que empiece la semana.
+              Organiza tus comidas de la semana.
             </p>
-          </div>
-          <button onClick={onOpenConfirm} style={{ background:"transparent", border:"1.5px solid rgba(255,255,255,0.6)", borderRadius:R.L, padding:"7px 14px", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer" }}>Probar nuevas ideas</button>
           </div>
 
         {/* Sub-tabs: Plan | Batch | Lista */}
         <div style={{ display:"flex", gap:0, background:"rgba(0,0,0,0.18)", borderRadius:R.L,
           padding:3, marginBottom:0 }}>
-          {[{k:"plan",label:"📅 Plan"},{k:"batch",label:"🍱 Batch"},{k:"compras",label:"🛒 Compras"}].map(t => (
+          {[{k:"plan",label:"Plan",icon:<CalendarDays size={13} strokeWidth={2}/>},{k:"batch",label:"Batch",icon:<Leaf size={13} strokeWidth={2}/>},{k:"compras",label:"Compras",icon:<ShoppingCart size={13} strokeWidth={2}/>}].map(t => (
             <button key={t.k} onClick={() => setActiveTab(t.k)} style={{
               flex:1, background: activeTab===t.k ? "#fff" : "transparent",
               border:"none", borderRadius:R.M, padding:"8px 0", fontSize:11,
               fontWeight: activeTab===t.k ? 800 : 600,
               color: activeTab===t.k ? T.ink : "rgba(255,255,255,0.75)",
-              cursor:"pointer", transition:"all 0.2s",
+              cursor:"pointer", transition:"all 0.2s", display:"flex", alignItems:"center",
+              justifyContent:"center", gap:4,
               boxShadow: activeTab===t.k ? EL.S : "none" }}>
-              {t.label}
+              {t.icon}{t.label}
             </button>
           ))}
         </div>
 
         {/* Day chips — only in plan tab */}
         {activeTab === "plan" && (
-          <div style={{ display:"flex", gap:8, overflowX:"auto", padding:"12px 0 2px", scrollbarWidth:"none" }}>
+          <div style={{ display:"flex", gap:8, overflowX:"auto", padding:"14px 0 16px", scrollbarWidth:"none" }}>
             {plan.map((d, i) => (
               <button key={i} onClick={() => setDayIdx(i)} style={{
                 background: dayIdx===i ? T.orange : "rgba(0,0,0,0.12)",
@@ -1387,7 +1610,7 @@ function WeeklyPlanScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRec
 
       {/* ═══ TAB: PLAN ═══ */}
       {activeTab === "plan" && (
-        <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"16px 16px 110px" }}>
+        <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"16px 16px 130px" }}>
           <h2 style={{ margin:"0 0 14px", fontSize:20, fontWeight:400, color:T.ink,
             fontFamily:"'DM Sans', sans-serif", letterSpacing:0.2 }}>{day.day}</h2>
 
@@ -1400,31 +1623,32 @@ function WeeklyPlanScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRec
               {/* ── Optional toggles ── */}
               <div style={{ display:"flex", gap:8 }}>
                 {[
-                  { label:"🌅 Desayuno", active:showBreakfast, onToggle:()=>setShowBreakfast(p=>!p) },
-                  { label:"🌙 +Porción cena", active:showDinner, onToggle:()=>setShowDinner(p=>!p) },
+                  { label:<span style={{display:"flex",alignItems:"center",gap:4}}><Sunrise size={12} strokeWidth={2}/>Desayuno</span>, active:showBreakfast, onToggle:()=>setShowBreakfast(p=>!p) },
+                  { label:<span style={{display:"flex",alignItems:"center",gap:4}}><Moon size={12} strokeWidth={2}/>+Porción cena</span>, active:showDinner, onToggle:()=>setShowDinner(p=>!p) },
                 ].map(t => (
-                  <button key={t.label} onClick={t.onToggle} style={{
+                  <button key={String(t.active)} onClick={t.onToggle} style={{
                     flex:1, padding:"8px", borderRadius:R.L,
                     background: t.active ? T.green : T.surface,
                     color: t.active ? "#fff" : T.inkLight,
                     fontSize:12, fontWeight:700, cursor:"pointer",
                     border:`1.5px solid ${t.active ? T.green : T.border}`,
-                    transition:"all 0.2s" }}>
+                    transition:"all 0.2s", display:"flex", alignItems:"center",
+                    justifyContent:"center", gap:4 }}>
                     {t.label} {t.active ? "✓" : "+"}
                   </button>
                 ))}
               </div>
               {showBreakfast && day.breakfast && (
-                <SlotRow slot="breakfast" label="Desayuno 🌅" day={day} dayIdx={dayIdx}
+                <SlotRow slot="breakfast" label={<span style={{display:"flex",alignItems:"center",gap:4}}><Sunrise size={11} color={T.inkLight} strokeWidth={2}/>DESAYUNO</span>} day={day} dayIdx={dayIdx}
                   getSrv={getSrv} setSrv={setSrv} cookedMeals={cookedMeals}
                   onOpenRecipe={onOpenRecipe} onSwap={onSwap}/>
               )}
-              <SlotRow slot="lunch" label="Almuerzo ☀️" day={day} dayIdx={dayIdx}
+              <SlotRow slot="lunch" label={<span style={{display:"flex",alignItems:"center",gap:4}}><Sun size={11} color={T.inkLight} strokeWidth={2}/>ALMUERZO</span>} day={day} dayIdx={dayIdx}
                 getSrv={getSrv} setSrv={setSrv} cookedMeals={cookedMeals}
                 onOpenRecipe={onOpenRecipe} onSwap={onSwap}/>
               {showDinner && (
                 day.dinner
-                  ? <SlotRow slot="dinner" label="Cena 🌙" day={day} dayIdx={dayIdx}
+                  ? <SlotRow slot="dinner" label={<span style={{display:"flex",alignItems:"center",gap:4}}><Moon size={11} color={T.inkLight} strokeWidth={2}/>CENA</span>} day={day} dayIdx={dayIdx}
                       getSrv={getSrv} setSrv={setSrv} cookedMeals={cookedMeals}
                       onOpenRecipe={onOpenRecipe} onSwap={onSwap}/>
                   : <div style={{ background:T.orangePale, borderRadius:R.XL, padding:"13px 16px",
@@ -1552,7 +1776,7 @@ function WeeklyPlanScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRec
 
             {/* Total time estimate */}
             <div style={{ background:T.orangePale, borderRadius:R.XL, padding:"14px 16px",
-              border:`1px solid ${T.orange}40`, marginTop:6, marginBottom:110,
+              border:`1px solid ${T.orange}40`, marginTop:6, marginBottom:130,
               display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
                 <div style={{ fontSize:12, fontWeight:700, color:T.inkMid }}>Preparar todo te tomará cerca de</div>
@@ -1826,94 +2050,343 @@ function WeeklyPlanScreen({ plan, isLoading, snackbar, onUndo, onSwap, onOpenRec
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// src/components/CelebrationOverlay — full-screen animated success moment
+// src/components/CelebrationOverlay — full-screen animated success moment + social share
 // ─────────────────────────────────────────────────────────────────────────────
 function CelebrationOverlay({ recipe, onDone }) {
-  const [progress, setProgress] = useState(0);
-  const DURATION = 2000; // ms — keep it snappy
+  const [phase,        setPhase]        = useState("celebrating"); // "celebrating" | "share"
+  const [progress,     setProgress]     = useState(0);
+  const [shareState,   setShareState]   = useState("idle");
+  const canvasRef = useRef(null);
+
+  const DURATION = 5000; // 5 seconds so user can read and choose
 
   useEffect(() => {
     const start = Date.now();
-    const raf = () => {
-      const elapsed = Date.now() - start;
-      const pct = Math.min(elapsed / DURATION, 1);
+    const tick = () => {
+      const pct = Math.min((Date.now() - start) / DURATION, 1);
       setProgress(pct);
-      if (pct < 1) requestAnimationFrame(raf);
-      else setTimeout(onDone, 150);
+      if (pct < 1) requestAnimationFrame(tick);
+      // bar finishes but screen stays — user must tap a button
     };
-    requestAnimationFrame(raf);
+    requestAnimationFrame(tick);
   }, []);
 
-  // Ease-out cubic
   const eased = 1 - Math.pow(1 - progress, 3);
 
-  return (
-    <div style={{
-      position:"absolute", inset:0, zIndex:500,
-      background:T.green,
+  // ── Draw share card on canvas when share phase starts ────────────────────
+  useEffect(() => {
+    if (phase !== "share") return;
+    // Small delay so the canvas element is rendered first
+    const timer = setTimeout(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = 600, H = 600;
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // BG gradient
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#156064");
+    bg.addColorStop(0.6, "#1A7A7F");
+    bg.addColorStop(1,  "#0D4D50");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Decorative circles (subtle)
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(W * 0.85, H * 0.15, 140, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W * 0.1,  H * 0.9,  100, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Subtle grid pattern
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+
+    // Try to draw recipe image in top section
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    // Map illus id → unsplash food photo
+    const ILLUS_MAP = {
+      r1:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600",
+      r2:"https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600",
+      r3:"https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600",
+      r4:"https://images.unsplash.com/photo-1547592180-85f173990554?w=600",
+      r5:"https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600",
+    };
+    img.src = ILLUS_MAP[recipe.illus] || ILLUS_MAP.r1;
+
+    const drawCard = () => {
+      // White card panel (bottom half)
+      const cardY = 310, cardH = H - cardY, cardR = 28;
+      ctx.fillStyle = "#FCFFF4";
+      ctx.beginPath();
+      ctx.moveTo(0, cardY + cardR);
+      ctx.arcTo(0, cardY, cardR, cardY, cardR);
+      ctx.lineTo(W - cardR, cardY);
+      ctx.arcTo(W, cardY, W, cardY + cardR, cardR);
+      ctx.lineTo(W, H); ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
+
+      // Recipe name
+      ctx.fillStyle = "#0D1F1F";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textBaseline = "top";
+      const name = recipe.name.length > 30 ? recipe.name.slice(0,30)+"…" : recipe.name;
+      ctx.fillText(name, 32, cardY + 28);
+
+      // "Preparado hoy"
+      ctx.fillStyle = "#6B8E8F";
+      ctx.font = "500 16px sans-serif";
+      ctx.fillText("Preparado hoy con Menta 🌿", 32, cardY + 70);
+
+      // Macro pills
+      const macros = [
+        { label:"Cal",   val:`${recipe.cal}`,        unit:"kcal" },
+        { label:"Prot",  val:`${recipe.protein||22}g`, unit:"proteína" },
+        { label:"Carbs", val:`${recipe.carbs||48}g`,  unit:"carbos" },
+      ];
+      const pillW = 156, pillH = 62, pillGap = 16;
+      const totalPillW = macros.length * pillW + (macros.length - 1) * pillGap;
+      const pillStartX = (W - totalPillW) / 2;
+      const pillY = cardY + 108;
+
+      macros.forEach((m, i) => {
+        const px = pillStartX + i * (pillW + pillGap);
+        ctx.fillStyle = "#EAF4F4";
+        ctx.beginPath();
+        ctx.roundRect(px, pillY, pillW, pillH, 14);
+        ctx.fill();
+
+        ctx.fillStyle = "#156064";
+        ctx.font = "bold 22px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(m.val, px + pillW / 2, pillY + 14);
+
+        ctx.fillStyle = "#6B8E8F";
+        ctx.font = "500 13px sans-serif";
+        ctx.fillText(m.unit, px + pillW / 2, pillY + 40);
+        ctx.textAlign = "left";
+      });
+
+      // Branding strip (bottom)
+      ctx.fillStyle = "#156064";
+      ctx.fillRect(0, H - 52, W, 52);
+
+      // Menta icon placeholder (circle)
+      ctx.fillStyle = "rgba(255,255,255,0.25)";
+      ctx.beginPath(); ctx.arc(36, H - 26, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("M", 36, H - 22);
+      ctx.textAlign = "left";
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 15px sans-serif";
+      ctx.fillText("Cocinado con Menta", 62, H - 20);
+
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.font = "500 13px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("mealflowai.com", W - 24, H - 20);
+      ctx.textAlign = "left";
+    };
+
+    img.onload = () => {
+      // Clip top half to image
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W, 340);
+      ctx.clip();
+      // Cover-fit the image
+      const scale = Math.max(W / img.width, 340 / img.height);
+      const dx = (W - img.width  * scale) / 2;
+      const dy = (340 - img.height * scale) / 2;
+      ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
+      // Dark scrim on photo
+      const scrim = ctx.createLinearGradient(0, 200, 0, 340);
+      scrim.addColorStop(0, "transparent");
+      scrim.addColorStop(1, "rgba(13,31,31,0.7)");
+      ctx.fillStyle = scrim;
+      ctx.fillRect(0, 0, W, 340);
+      ctx.restore();
+      drawCard();
+    };
+      img.onerror = () => drawCard(); // fallback: no photo, just card
+    }, 80); // wait for canvas to be in DOM
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  // ── Share handler ──────────────────────────────────────────────────────────
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.toBlob(async blob => {
+      const file = new File([blob], "menta-cocinado.png", { type:"image/png" });
+      const shareText = `Acabo de cocinar "${recipe.name}" con Menta 🌿 #CoocinadoConMenta`;
+      if (navigator.share && navigator.canShare?.({ files:[file] })) {
+        try { await navigator.share({ files:[file], text:shareText }); setShareState("shared"); }
+        catch {}
+      } else if (navigator.share) {
+        try { await navigator.share({ text:shareText }); setShareState("shared"); }
+        catch {}
+      } else {
+        // Fallback: download image
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "cocinado-con-menta.png";
+        a.click();
+        setShareState("copied");
+        setTimeout(() => setShareState("idle"), 3000);
+      }
+    }, "image/png");
+  };
+
+  // ── PHASE: celebrating (with both action buttons) ─────────────────────────
+  if (phase === "celebrating") return (
+    <div style={{ position:"absolute", inset:0, zIndex:500, background:T.green,
       display:"flex", flexDirection:"column", alignItems:"center",
-      justifyContent:"center", padding:"32px 28px",
-      animation:"fadeIn 0.35s ease",
-      borderRadius:52,  // match phone frame
-    }}>
-      {/* Menta bouncing */}
+      justifyContent:"center", padding:"32px 24px",
+      animation:"fadeIn 0.35s ease", borderRadius:52 }}>
+
       <div style={{ animation:"mentaBounce 0.9s ease-in-out infinite", marginBottom:20 }}>
         <MentaFace size={90} />
       </div>
 
-      {/* Title */}
       <h2 style={{ margin:"0 0 8px", color:"#fff", fontSize:26, fontWeight:800,
-        textAlign:"center", lineHeight:1.2 }}>
-        Listo ✨
-      </h2>
-
-      {/* Secondary */}
+        textAlign:"center", lineHeight:1.2 }}>¡Listo!</h2>
       <p style={{ margin:"0 0 4px", color:"rgba(255,255,255,0.9)", fontSize:16,
-        fontWeight:600, textAlign:"center" }}>
-        Ya tienes el almuerzo de mañana.
-      </p>
+        fontWeight:600, textAlign:"center" }}>Ya tienes el almuerzo de mañana.</p>
+      <p style={{ margin:"0 0 24px", color:"rgba(255,255,255,0.7)", fontSize:14,
+        fontWeight:500, textAlign:"center" }}>{recipe.name}</p>
 
-      {/* Recipe name */}
-      <p style={{ margin:"0 0 28px", color:"rgba(255,255,255,0.7)", fontSize:14,
-        fontWeight:500, textAlign:"center" }}>
-        {recipe.name} · Una cosa menos para mañana.
-      </p>
-
-      {/* Nutrition earned */}
-      <div style={{ display:"flex", gap:12, marginBottom:32 }}>
+      {/* Macro chips */}
+      <div style={{ display:"flex", gap:12, marginBottom:28 }}>
         {[
-          { icon:"🔥", val:`+${recipe.cal}`, label:"kcal" },
-          { icon:"💪", val:`+${recipe.protein}g`, label:"proteína" },
-          { icon:"⚡", val:"Racha", label:"activa" },
+          { icon:<Flame size={16} color="#fff" fill="#fff" strokeWidth={0}/>, val:`${recipe.cal}`, label:"kcal" },
+          { icon:<Dumbbell size={16} color="#fff" strokeWidth={2}/>, val:`${recipe.protein||22}g`, label:"proteína" },
+          { icon:<Sparkles size={16} color="#fff" strokeWidth={2}/>, val:"Racha", label:"activa" },
         ].map(s => (
           <div key={s.label} style={{ background:"rgba(255,255,255,0.18)", borderRadius:R.L,
             padding:"10px 14px", textAlign:"center", backdropFilter:"blur(8px)" }}>
-            <div style={{ fontSize:18 }}>{s.icon}</div>
+            <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}>{s.icon}</div>
             <div style={{ fontSize:15, fontWeight:800, color:"#fff" }}>{s.val}</div>
             <div style={{ fontSize:11, color:"rgba(255,255,255,0.8)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Progress bar */}
-      <div style={{ width:"100%", background:"rgba(255,255,255,0.25)",
-        borderRadius:R.pill, height:8, overflow:"hidden", marginBottom:12 }}>
-        <div style={{
-          width:`${eased * 100}%`, height:"100%", borderRadius:R.pill,
-          background:"#fff",
-          boxShadow:"0 0 12px rgba(255,255,255,0.6)",
-          transition:"none",
-        }}/>
+      {/* Progress bar (5s countdown) */}
+      <div style={{ width:"100%", background:"rgba(255,255,255,0.2)",
+        borderRadius:R.pill, height:4, overflow:"hidden", marginBottom:28 }}>
+        <div style={{ width:`${eased*100}%`, height:"100%", borderRadius:R.pill,
+          background:"#fff", boxShadow:"0 0 10px rgba(255,255,255,0.5)" }}/>
       </div>
-      <button onClick={onDone} style={{ background:"rgba(255,255,255,0.2)",
-        border:"1.5px solid rgba(255,255,255,0.4)", borderRadius:R.pill,
-        padding:"8px 20px", color:"#fff", fontSize:12, fontWeight:600,
-        cursor:"pointer", marginTop:4 }}>
-        Ir al inicio →
-      </button>
+
+      {/* ACTION BUTTONS */}
+      <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:10 }}>
+        {/* Share button — primary */}
+        <button onClick={() => setPhase("share")} style={{
+          width:"100%", padding:"15px", borderRadius:R.L, border:"none",
+          background:T.orange, color:T.ink, fontSize:15, fontWeight:800,
+          cursor:"pointer", fontFamily:"'DM Sans', sans-serif",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          boxShadow:`0 8px 24px rgba(0,0,0,0.2)` }}>
+          <MessageCircle size={18} color={T.ink} strokeWidth={2}/>
+          Compartir mi logro
+        </button>
+        {/* Continue — ghost */}
+        <button onClick={onDone} style={{
+          width:"100%", padding:"13px", borderRadius:R.L,
+          border:"1.5px solid rgba(255,255,255,0.35)",
+          background:"rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.85)",
+          fontSize:14, fontWeight:600, cursor:"pointer",
+          fontFamily:"'DM Sans', sans-serif", backdropFilter:"blur(4px)" }}>
+          Continuar
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── PHASE: share ───────────────────────────────────────────────────────────
+  return (
+    <div style={{ position:"absolute", inset:0, zIndex:500, background:T.surface,
+      display:"flex", flexDirection:"column", overflow:"hidden",
+      borderRadius:52, animation:"fadeIn 0.4s ease" }}>
+
+      {/* Share card preview */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+        justifyContent:"center", padding:"24px 20px 8px", background:T.green, position:"relative" }}>
+
+        {/* Stars background scatter */}
+        {[...Array(8)].map((_,i) => (
+          <div key={i} style={{ position:"absolute",
+            top:`${10+Math.sin(i*1.8)*35}%`, left:`${5+i*12}%`,
+            width: i%2===0?6:4, height: i%2===0?6:4, borderRadius:99,
+            background:"rgba(255,255,255,0.3)",
+            animation:`pulse ${1.2+i*0.3}s ease-in-out infinite` }}/>
+        ))}
+
+        <p style={{ margin:"0 0 12px", color:"rgba(255,255,255,0.8)", fontSize:12,
+          fontWeight:700, textTransform:"uppercase", letterSpacing:1 }}>
+          Tu logro de hoy
+        </p>
+
+        {/* Canvas card */}
+        <div style={{ width:"100%", maxWidth:280, aspectRatio:"1/1",
+          borderRadius:20, overflow:"hidden",
+          boxShadow:`0 20px 60px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.15)`,
+          transform:"scale(1)", animation:"checkPop 0.5s ease" }}>
+          <canvas ref={canvasRef} style={{ width:"100%", height:"100%",
+            display:"block" }}/>
+        </div>
+      </div>
+
+      {/* Bottom action area */}
+      <div style={{ padding:"20px 20px 32px", background:T.surface, flexShrink:0 }}>
+        <p style={{ margin:"0 0 4px", fontSize:16, fontWeight:800, color:T.ink, textAlign:"center" }}>
+          ¡Comparte tu logro!
+        </p>
+        <p style={{ margin:"0 0 18px", fontSize:12, color:T.inkMid, textAlign:"center", lineHeight:1.5 }}>
+          Muéstrale a tus contactos que estás cocinando bien esta semana.
+        </p>
+
+        {/* Share button */}
+        <button onClick={handleShare} style={{
+          width:"100%", padding:"15px", borderRadius:R.L, border:"none",
+          background: shareState==="shared" ? T.green : T.ink,
+          color:"#fff", fontSize:15, fontWeight:800, cursor:"pointer",
+          marginBottom:10, fontFamily:"'DM Sans', sans-serif",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          boxShadow: EL.L, transition:"all 0.25s" }}>
+          {shareState === "shared"
+            ? <><Check size={18} color="#fff" strokeWidth={2.5}/> ¡Compartido!</>
+            : shareState === "copied"
+            ? <><Check size={18} color="#fff" strokeWidth={2.5}/> Imagen descargada</>
+            : <><MessageCircle size={18} color="#fff" strokeWidth={2}/> Compartir · #CoocinadoConMenta</>
+          }
+        </button>
+
+        {/* Skip */}
+        <button onClick={onDone} style={{
+          width:"100%", padding:"12px", borderRadius:R.L,
+          border:`1.5px solid ${T.border}`, background:"transparent",
+          color:T.inkMid, fontSize:13, fontWeight:600, cursor:"pointer",
+          fontFamily:"'DM Sans', sans-serif" }}>
+          Ir al inicio
+        </button>
+      </div>
     </div>
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // src/screens/RecipeDetailScreen
@@ -1954,7 +2427,7 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
   const toggleVoice = () => {
     const next = !listening;
     setListening(next);
-    setVoiceMsg(next ? 'Di "siguiente", "pausar" o "preguntarle a Menta" 🎙' : "");
+    setVoiceMsg(next ? 'Di "siguiente", "pausar" o "preguntarle a Menta"' : "");
   };
 
   return (
@@ -1980,18 +2453,20 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
           border:"none", borderRadius:R.pill, width:44, height:44,
           cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
           boxShadow:EL.M }}>
-          <span style={{ fontSize:20 }}>{cookMode ? "🍳" : "👨‍🍳"}</span>
+          {cookMode ? <Utensils size={22} color={T.ink} strokeWidth={2}/> : <ChefHat size={22} color={T.green} strokeWidth={2}/>}
         </button>
         <div style={{ position:"absolute", bottom:16, left:16, right:16 }}>
           <div style={{ display:"flex", gap:8, marginBottom:8, flexWrap:"wrap" }}>
             <DiffBadge d={recipe.difficulty} />
             <span style={{ background:"rgba(255,255,255,0.2)", backdropFilter:"blur(8px)",
-              color:"#fff", padding:"3px 9px", borderRadius:99, fontSize:11, fontWeight:600 }}>
-              ⏱ {recipe.time}
+              color:"#fff", padding:"3px 9px", borderRadius:99, fontSize:11, fontWeight:600,
+              display:"inline-flex", alignItems:"center", gap:4 }}>
+              <Clock size={11} color="#fff" strokeWidth={2}/> {recipe.time}
             </span>
             <span style={{ background:"rgba(255,255,255,0.2)", backdropFilter:"blur(8px)",
-              color:"#fff", padding:"3px 9px", borderRadius:99, fontSize:11, fontWeight:600 }}>
-              🔥 {recipe.cal} cal
+              color:"#fff", padding:"3px 9px", borderRadius:99, fontSize:11, fontWeight:600,
+              display:"inline-flex", alignItems:"center", gap:4 }}>
+              <Flame size={11} color="#fff" strokeWidth={2}/> {recipe.cal} cal
             </span>
           </div>
           <h1 style={{ margin:0, color:"#fff", fontSize:24, fontWeight:400, lineHeight:1.15,
@@ -2001,7 +2476,7 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
         </div>
       </div>
 
-      <div style={{ padding:"20px 16px 110px" }}>
+      <div style={{ padding:"20px 16px 130px" }}>
         {/* Description */}
         <p style={{ margin:"0 0 20px", fontSize:14, color:T.inkMid, lineHeight:1.7 }}>
           {recipe.desc}
@@ -2009,8 +2484,9 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
 
         {/* ── VIDEO PLACEHOLDER */}
         <div style={{ marginBottom:24 }}>
-          <h3 style={{ margin:"0 0 10px", fontSize:14, fontWeight:800, color:T.ink }}>
-            🎬 Ver preparación
+          <h3 style={{ margin:"0 0 10px", fontSize:14, fontWeight:800, color:T.ink,
+            display:"flex", alignItems:"center", gap:6 }}>
+            <Video size={15} color={T.ink} strokeWidth={2}/> Ver preparación
           </h3>
           <div
             onClick={() => setVideoPlaying(!videoPlaying)}
@@ -2065,8 +2541,10 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
                 transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
                 transform: videoPlaying ? "scale(0.88)" : "scale(1)"
               }}>
-                <span style={{ fontSize:22, marginLeft: videoPlaying ? 0 : 3, color: videoPlaying ? "#fff" : T.ink }}>
-                  {videoPlaying ? "⏸" : "▶"}
+                <span style={{ marginLeft: videoPlaying ? 0 : 3, color: videoPlaying ? "#fff" : T.ink, display:"flex", alignItems:"center" }}>
+                  {videoPlaying
+                    ? <Pause size={22} color="#fff" strokeWidth={2}/>
+                    : <Play  size={22} color={T.ink} strokeWidth={2} fill={T.ink}/>}
                 </span>
               </div>
               {videoPlaying && (
@@ -2140,7 +2618,7 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
               <button onClick={()=>setIngOpen(p=>!p)}
                 style={{ width:"100%", background:"none", border:"none", cursor:"pointer",
                   padding:"13px 16px", display:"flex", alignItems:"center", gap:10 }}>
-                <span style={{ fontSize:18 }}>🧺</span>
+                <ShoppingBasket size={20} color={T.green} strokeWidth={2}/>
                 <div style={{ flex:1, textAlign:"left" }}>
                   <div style={{ fontSize:14, fontWeight:700, color:T.ink }}>Lo que necesitarás</div>
                   <div style={{ fontSize:11, color:T.inkLight, marginTop:1 }}>
@@ -2192,8 +2670,8 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
                       {/* Ingredient icon */}
                       <div style={{width:36,height:36,borderRadius:R.L,flexShrink:0,
                         background:T.greenGhost,display:"flex",alignItems:"center",
-                        justifyContent:"center",fontSize:18}}>
-                        {CATEGORY_ICONS[ing.category]||"🔹"}
+                        justifyContent:"center"}}>
+                        <Leaf size={16} color={T.green} strokeWidth={2}/>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:700,color:T.ink,
@@ -2252,7 +2730,7 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
         {cookMode && (
           <div style={{ marginBottom:14, background:T.orange, borderRadius:R.L, padding:"12px 16px",
             display:"flex", alignItems:"center", gap:10, boxShadow:EL.S, color:T.ink }}>
-            <span style={{ fontSize:20 }}>🍳</span>
+            <Utensils size={22} color={T.ink} strokeWidth={2}/>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:13, fontWeight:700, color:T.ink }}>Perfecto. Vamos paso a paso.</div>
               <div style={{ fontSize:12, color:T.inkMid }}>Pantalla siempre encendida · Controles grandes</div>
@@ -2269,23 +2747,23 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
           <div style={{ background:T.card, borderRadius:R.XL, padding:"16px",
             border:`2px solid ${T.green}30`, boxShadow:EL.M, marginBottom:16 }}>
             <div style={{ fontSize:13, fontWeight:700, color:T.ink, marginBottom:10 }}>
-              Antes de empezar 👀
+              Antes de empezar
             </div>
             <div style={{ display:"flex", gap:8, marginBottom:14 }}>
               {[
-                { icon:"⏱", label:`${recipe.time} activos` },
-                { icon:"📋", label:`${recipe.steps?.length||5} pasos` },
-                { icon:"🔥", label:`${recipe.cal} kcal` },
+                { icon:<Clock size={18} color={T.green} strokeWidth={2}/>, label:`${recipe.time} activos` },
+                { icon:<ClipboardList size={18} color={T.green} strokeWidth={2}/>, label:`${recipe.steps?.length||5} pasos` },
+                { icon:<Flame size={18} color={T.orange} strokeWidth={2}/>, label:`${recipe.cal} kcal` },
               ].map(s=>(
                 <div key={s.label} style={{ flex:1, background:T.surface, borderRadius:R.L,
                   padding:"8px 4px", textAlign:"center" }}>
-                  <div style={{ fontSize:16 }}>{s.icon}</div>
+                  <div style={{ display:"flex", justifyContent:"center", alignItems:"center", height:24 }}>{s.icon}</div>
                   <div style={{ fontSize:11, fontWeight:700, color:T.ink, marginTop:2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
             <div style={{ fontSize:12, color:T.inkMid, marginBottom:12, lineHeight:1.5 }}>
-              <strong>Beneficio de hoy:</strong> energía sostenida para la tarde, sin picar entre horas 💪
+              <strong>Beneficio de hoy:</strong> energía sostenida para la tarde, sin picar entre horas.
             </div>
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={()=>setPreCookShown(true)}
@@ -2296,8 +2774,8 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
               <button onClick={()=>{ setPreCookShown(true); setCookMode(true); }}
                 style={{ flex:2, padding:"11px", borderRadius:R.L, border:"none",
                   background:T.orange, color:T.ink, fontSize:13, fontWeight:800, cursor:"pointer",
-                  boxShadow:EL.S }}>
-                ¡Sí, vamos! 👨‍🍳
+                  boxShadow:EL.S, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                <ChefHat size={15} color={T.ink} strokeWidth={2}/> ¡Sí, vamos!
               </button>
             </div>
           </div>
@@ -2451,17 +2929,15 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
             <button onClick={onMarkCooked}
               style={{ background:"transparent", border:`1.5px solid ${T.border}`,
                 borderRadius:R.L, padding:"12px", color:T.inkLight, fontSize:13,
-                cursor:"pointer", fontFamily:"'DM Sans', sans-serif', fontWeight:600" }}>
-              🔁 Volver a preparar
+                cursor:"pointer", fontFamily:"'DM Sans', sans-serif', fontWeight:600",
+                display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+              <RotateCcw size={14} color={T.inkLight} strokeWidth={2}/> Volver a preparar
             </button>
           ) : (
             <PrimaryBtn onClick={() => {
               setCelebrating(true);
-              // auto-complete after animation (3.2s)
-              setTimeout(() => {
-                onMarkCooked();
-              }, 2300);
-            }}>✅ Listo, ya cociné esto</PrimaryBtn>
+              setTimeout(() => { onMarkCooked(); }, 2300);
+            }}><span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Check size={15} color={T.ink} strokeWidth={3}/> Listo, ya cociné esto</span></PrimaryBtn>
           )}
         </div>
       </div>
@@ -2508,7 +2984,14 @@ function DiscoverScreen({ onOpenRecipe, onGoToChat, favorites=[], onToggleFav, p
   const DAYS_SHORT_D = ["L","M","X","J","V","S","D"];
   const [urlModal,     setUrlModal]     = useState(false);
   const [urlInput,     setUrlInput]     = useState("");
-  const filters = ["Todo","⚡ Rápidas","💸 Económicas","🍱 Meal prep","💪 Proteína","🌍 Cocinas del mundo"];
+  const filters = [
+    { id:"Todo",    label:"Todo",          icon:null },
+    { id:"Rápidas", label:"Rápidas",       icon:<Zap     size={13} strokeWidth={2}/> },
+    { id:"Eco",     label:"Económicas",    icon:<Leaf    size={13} strokeWidth={2}/> },
+    { id:"Meal",    label:"Meal prep",     icon:<ShoppingBasket size={13} strokeWidth={2}/> },
+    { id:"Prot",    label:"Proteína",      icon:<Dumbbell size={13} strokeWidth={2}/> },
+    { id:"World",   label:"Cocinas",       icon:<Compass size={13} strokeWidth={2}/> },
+  ];
   const cuisines = [
     { name:"Japonesa 🍱", bg:"#f5e6d0" }, { name:"Mexicana 🌮", bg:"#fde8d8" },
     { name:"Italiana 🍝", bg:"#fdf0d5" }, { name:"India 🍛", bg:"#f8e8d0" },
@@ -2519,25 +3002,14 @@ function DiscoverScreen({ onOpenRecipe, onGoToChat, favorites=[], onToggleFav, p
       <div style={{ background:T.green, borderRadius:"0 0 28px 28px",
         boxShadow:"0 8px 32px rgba(21,96,100,0.18)",
         padding:"52px 20px 24px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-          <div>
-            <h1 style={{ margin:"0 0 4px", color:"#fff", fontSize:24, fontWeight:400,
-              fontFamily:"'DM Sans', sans-serif", letterSpacing:0.2 }}>Ideas</h1>
-            <p style={{ margin:0, color:"rgba(255,255,255,0.95)", fontSize:13 }}>
-              Ideas simples para semanas ocupadas.
-            </p>
-          </div>
-          <button onClick={()=>setUrlModal(true)} style={{
-            background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.35)",
-            borderRadius:R.L, padding:"8px 12px", display:"flex", alignItems:"center", gap:6,
-            cursor:"pointer", color:"#fff", fontSize:12, fontWeight:600 }}>
-            <Icon name="link" size={14} color="#fff" strokeWidth={2}/>
-            Importar desde video o enlace
-          </button>
-        </div>
+        <h1 style={{ margin:"0 0 4px", color:"#fff", fontSize:24, fontWeight:400,
+          fontFamily:"'DM Sans', sans-serif", letterSpacing:0.2 }}>Ideas</h1>
+        <p style={{ margin:0, color:"rgba(255,255,255,0.95)", fontSize:13 }}>
+          Ideas simples para semanas ocupadas.
+        </p>
       </div>
 
-      <div style={{ padding:"16px 16px 110px" }}>
+      <div style={{ padding:"16px 16px 130px" }}>
         {/* Search + recent searches */}
         <div style={{ background:T.card, borderRadius:R.pill, padding:"12px 18px",
           display:"flex", alignItems:"center", gap:10, border:`1.5px solid ${T.border}`,
@@ -2545,38 +3017,34 @@ function DiscoverScreen({ onOpenRecipe, onGoToChat, favorites=[], onToggleFav, p
           <Icon name="compass" size={18} color={T.inkLight} strokeWidth={1.8}/>
           <span style={{ fontSize:14, color:T.inkLight, fontWeight:600 }}>Buscar recetas, ingredientes…</span>
         </div>
-        {/* Recent searches — F pattern / Search History */}
-        <div style={{ display:"flex", gap:8, marginBottom:14, overflowX:"auto", scrollbarWidth:"none" }}>
-          {["🐟 salmón","🌱 vegano rápido","🍗 pollo batch"].map(q => (
-            <button key={q} style={{ flexShrink:0, background:T.card, border:`1.5px solid ${T.border}`,
-              borderRadius:R.pill, padding:"6px 13px", fontSize:12, fontWeight:600,
-              color:T.inkMid, cursor:"pointer", whiteSpace:"nowrap" }}>
-              🕐 {q}
-            </button>
-          ))}
-        </div>
-
         {/* Menta curation note */}
         <div style={{ background:T.greenGhost, borderRadius:R.L, padding:"12px 14px",
           border:`1px solid ${T.greenPale}`, marginBottom:16,
           display:"flex", alignItems:"center", gap:10 }}>
           <MentaFace size={28}/>
           <p style={{ margin:0, fontSize:12, color:T.inkMid, lineHeight:1.5 }}>
-            <strong style={{ color:T.green }}>Para ti</strong> — Menta seleccionó estas recetas según tus gustos y tu tiempo disponible 🌿
+            <strong style={{ color:T.green }}>Para ti</strong> — Menta seleccionó estas recetas según tus gustos y tu tiempo disponible
           </p>
         </div>
 
         {/* Filter chips */}
         <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:14, scrollbarWidth:"none" }}>
-          {filters.map((f,i) => (
-            <button key={f} onClick={()=>setActiveFilter(f)} style={{
-              background: activeFilter===f ? T.green : T.card,
-              color: activeFilter===f ? "#fff" : T.inkMid,
-              border: activeFilter===f ? "none" : `1.5px solid ${T.border}`,
-              borderRadius:R.pill, padding:"7px 16px", fontSize:12, fontWeight:700,
-              cursor:"pointer", flexShrink:0, whiteSpace:"nowrap",
-              boxShadow: activeFilter===f ? EL.S : "none", transition:"all 0.18s" }}>{f}</button>
-          ))}
+          {filters.map(f => {
+            const active = activeFilter === f.id;
+            return (
+              <button key={f.id} onClick={() => setActiveFilter(f.id)} style={{
+                background: active ? T.green : T.card,
+                color:      active ? "#fff"  : T.inkMid,
+                border:     active ? "none"  : `1.5px solid ${T.border}`,
+                borderRadius:R.pill, padding:"7px 14px", fontSize:12, fontWeight:700,
+                cursor:"pointer", flexShrink:0, whiteSpace:"nowrap",
+                display:"flex", alignItems:"center", gap:5,
+                boxShadow: active ? EL.S : "none", transition:"all 0.18s" }}>
+                {f.icon && React.cloneElement(f.icon, { color: active ? "#fff" : T.inkMid })}
+                {f.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Recipe grid — with fav + add-to-plan */}
@@ -2600,7 +3068,7 @@ function DiscoverScreen({ onOpenRecipe, onGoToChat, favorites=[], onToggleFav, p
                       borderRadius:R.pill, background:"rgba(255,255,255,0.92)", border:"none",
                       cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
                       fontSize:16, boxShadow:EL.S }}>
-                    {isFav ? "❤️" : "🤍"}
+                    {isFav ? <Heart size={15} color="#e74c3c" fill="#e74c3c" strokeWidth={2}/> : <Heart size={15} color={T.inkLight} strokeWidth={2}/>}
                   </button>
                 </div>
                 <div style={{ padding:"10px 12px 10px" }}>
@@ -2750,7 +3218,7 @@ function ProgressScreen() {
           <span style={{ color:"rgba(255,255,255,0.95)", fontSize:11 }}>10,000 XP para Nivel 8</span>
         </div>
       </div>
-      <div style={{ padding:"16px 16px 110px" }}>
+      <div style={{ padding:"16px 16px 130px" }}>
         {/* Weekly cal chart (simple bars) */}
         <div style={{ background:T.card, borderRadius:18, padding:16,
           border:`1px solid ${T.border}`, marginBottom:20 }}>
@@ -2793,9 +3261,10 @@ function ProgressScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // src/screens/ProfileScreen
 // ─────────────────────────────────────────────────────────────────────────────
-function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleFav, cookHistory=[], plan=[], spendPerMeal:initSpend=12000 }) {
-  const [editSpend, setEditSpend] = useState(false);
-  const [localSpend, setLocalSpend] = useState(initSpend);
+function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleFav, cookHistory=[], plan=[], spendPerMeal:initSpend=12000, streak={ current:3, best:7 }, achStats={} }) {
+  const [editSpend,        setEditSpend]        = useState(false);
+  const [localSpend,       setLocalSpend]       = useState(initSpend);
+  const [showAchievements, setShowAchievements] = useState(false);
   const name = userProfile?.name || "Usuario";
   const diet = ONBOARD_DIETS?.find(d=>d.id===userProfile?.diet)?.label || "Omnívoro";
   const goals = (userProfile?.goals||[]).map(g=>ONBOARD_GOALS?.find(x=>x.id===g)?.label).filter(Boolean);
@@ -2807,7 +3276,14 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
     { label:"Configuración y notificaciones", icon:"bell"  },
   ];
   return (
-    <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none" }}>
+    <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", position:"relative" }}>
+
+      {/* Achievements full-screen overlay */}
+      {showAchievements && (
+        <AchievementsScreen streak={streak} achStats={achStats}
+          onBack={() => setShowAchievements(false)} />
+      )}
+
       <div style={{ background:T.green,
         padding:"52px 20px 36px", textAlign:"center" }}>
         <div style={{ width:80, height:80, borderRadius:R.pill, background:"rgba(255,255,255,0.18)",
@@ -2822,28 +3298,94 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
           {diet} · Miembro Menta ✨
         </p>
         <div style={{ display:"inline-flex", background:"rgba(255,255,255,0.18)", borderRadius:R.pill,
-          padding:"5px 16px", gap:4, alignItems:"center" }}>
-          <span style={{ fontSize:12, color:"#fff", fontWeight:600 }}>Nivel 7</span>
-          <span style={{ color:"rgba(255,255,255,0.5)", fontSize:12 }}>·</span>
-          <span style={{ fontSize:12, color:T.orange, fontWeight:700 }}>7,200 XP 🔥</span>
+          padding:"5px 16px", gap:6, alignItems:"center" }}>
+          <Flame size={14} color={T.orange} fill={T.orange} strokeWidth={0}/>
+          <span style={{ fontSize:13, color:T.orange, fontWeight:800 }}>{streak.current} días de racha</span>
+          <span style={{ color:"rgba(255,255,255,0.4)", fontSize:12 }}>·</span>
+          <span style={{ fontSize:12, color:"rgba(255,255,255,0.7)", fontWeight:600 }}>mejor: {streak.best}d</span>
         </div>
       </div>
 
-      <div style={{ padding:"16px 16px 110px" }}>
+      <div style={{ padding:"16px 16px 130px" }}>
 
-        {/* ── Money saved calculator ── */}
+        {/* ── STREAK CARD ── */}
         {(() => {
-          // Mapping: use user's actual spend from onboarding
-          const homeCost = 4500; // avg home cooking cost per meal
-          const saved = cookHistory.length * (localSpend - homeCost);
+          const filled = streak.current % 7 || (streak.current > 0 && streak.current % 7 === 0 ? 7 : 0);
+          return (
+            <div style={{ background:`linear-gradient(135deg, ${T.green} 0%, ${T.greenLight} 100%)`,
+              borderRadius:R.XL, padding:"18px 20px", marginBottom:16, boxShadow:EL.M }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.75)", fontWeight:700,
+                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:4 }}>Racha actual</div>
+                  <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
+                    <span style={{ fontSize:42, fontWeight:900, color:"#fff", lineHeight:1 }}>
+                      {streak.current}
+                    </span>
+                    <span style={{ fontSize:16, color:"rgba(255,255,255,0.7)", fontWeight:600 }}>días</span>
+                  </div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.7)", fontWeight:600,
+                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:4 }}>Mejor racha</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:T.orange }}>{streak.best}d</div>
+                  <div style={{ fontSize:10, color:"rgba(255,255,255,0.5)" }}>récord personal</div>
+                </div>
+              </div>
+              {/* Week dots */}
+              <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                {["L","M","X","J","V","S","D"].map((d, i) => {
+                  const done    = i < filled;
+                  const isToday = i === filled - 1;
+                  return (
+                    <div key={d} style={{ flex:1, display:"flex", flexDirection:"column",
+                      alignItems:"center", gap:5 }}>
+                      <div style={{ width:"100%", aspectRatio:"1/1", borderRadius:8,
+                        background: done
+                          ? isToday
+                            ? `linear-gradient(135deg, ${T.orange}, #FF8C42)`
+                            : "rgba(255,255,255,0.35)"
+                          : "rgba(255,255,255,0.12)",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        boxShadow: isToday ? `0 4px 12px ${T.orange}70` : "none" }}>
+                        {done && <Check size={12} color="#fff" strokeWidth={3}/>}
+                      </div>
+                      <span style={{ fontSize:10, fontWeight:700,
+                        color: done ? (isToday ? T.orange : "rgba(255,255,255,0.9)") : "rgba(255,255,255,0.3)" }}>
+                        {d}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Motivational hint */}
+              <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:R.L,
+                padding:"8px 12px", display:"flex", alignItems:"center", gap:8 }}>
+                <Sparkles size={12} color="rgba(255,255,255,0.8)" strokeWidth={2}/>
+                <span style={{ fontSize:11, color:"rgba(255,255,255,0.8)" }}>
+                  {streak.current >= 7
+                    ? "¡Semana completa! Eres imparable 🔥"
+                    : `${7 - (streak.current % 7 || 7)} días más para completar la semana`}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── AHORRADO ESTE MES ── */}
+        {(() => {
+          const homeCost = 4500;
+          const saved = Math.max(achStats.savings || 0, cookHistory.length * (localSpend - homeCost));
           return (
             <div style={{ background:`linear-gradient(135deg, ${T.green} 0%, ${T.greenLight} 100%)`,
               borderRadius:R.XL, padding:"18px 20px", marginBottom:16, boxShadow:EL.M }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
                 <div>
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.75)", fontWeight:600,
-                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:4 }}>
-                    💰 Ahorrado este mes
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.75)", fontWeight:700,
+                    textTransform:"uppercase", letterSpacing:0.8, marginBottom:4,
+                    display:"flex", alignItems:"center", gap:5 }}>
+                    <ShoppingCart size={11} color="rgba(255,255,255,0.75)" strokeWidth={2}/>
+                    Ahorrado este mes
                   </div>
                   <div style={{ fontSize:30, fontWeight:800, color:"#fff", lineHeight:1 }}>
                     ${Math.max(0,(saved/1000)).toFixed(0)}k <span style={{ fontSize:13 }}>COP</span>
@@ -2862,7 +3404,6 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
                 <div style={{ width:`${Math.min((cookHistory.length/21)*100,100)}%`,
                   height:"100%", background:"#fff", borderRadius:R.pill, transition:"width 0.6s ease" }}/>
               </div>
-              {/* Editable spend — Mapping nudge */}
               {!editSpend ? (
                 <button onClick={()=>setEditSpend(true)} style={{ marginTop:8, background:"none",
                   border:"none", color:"rgba(255,255,255,0.7)", fontSize:11, cursor:"pointer",
@@ -2886,6 +3427,103 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
           );
         })()}
 
+        {/* ── ACHIEVEMENTS SUMMARY CARD (tappable) ── */}
+        {(() => {
+          const getP = (ach) => {
+            const val = ach.metric === "dayStreak"   ? streak.current
+                      : ach.metric === "uniqueCount" ? (achStats.uniqueIds||[]).length
+                      : (achStats[ach.metric] || 0);
+            return val >= ach.target;
+          };
+          const unlocked = ACHIEVEMENTS.filter(getP);
+          const totalXP  = unlocked.reduce((s,a)=>s+a.xp,0) + streak.current*10;
+          const pct      = Math.round((unlocked.length / ACHIEVEMENTS.length) * 100);
+
+          // Show last 4 unlocked (or placeholders)
+          const recent   = unlocked.slice(-4);
+          const catStats = ACH_CATEGORIES.map(cat => ({
+            ...cat,
+            done: cat.items.filter(a => {
+              const val = a.metric==="dayStreak" ? streak.current
+                        : a.metric==="uniqueCount" ? (achStats.uniqueIds||[]).length
+                        : (achStats[a.metric]||0);
+              return val >= a.target;
+            }).length
+          }));
+
+          return (
+            <button onClick={() => setShowAchievements(true)}
+              style={{ width:"100%", background:T.card, borderRadius:R.XL,
+                border:`1px solid ${T.border}`, boxShadow:EL.S, marginBottom:16,
+                padding:"16px", cursor:"pointer", textAlign:"left" }}>
+              {/* Header row */}
+              <div style={{ display:"flex", alignItems:"center", marginBottom:12 }}>
+                <Award size={16} color={T.green} strokeWidth={2}/>
+                <span style={{ fontSize:14, fontWeight:800, color:T.ink, marginLeft:8, flex:1 }}>Logros</span>
+                <div style={{ background:T.greenGhost, borderRadius:99, padding:"2px 9px", marginRight:8 }}>
+                  <span style={{ fontSize:11, fontWeight:800, color:T.green }}>
+                    {unlocked.length}/{ACHIEVEMENTS.length}
+                  </span>
+                </div>
+                <Sparkles size={12} color={T.orange} strokeWidth={2}/>
+                <span style={{ fontSize:12, fontWeight:700, color:T.orange, marginLeft:4 }}>
+                  {totalXP.toLocaleString()} XP
+                </span>
+              </div>
+
+              {/* Overall progress */}
+              <div style={{ marginBottom:12 }}>
+                <div style={{ background:T.border, borderRadius:99, height:5, overflow:"hidden" }}>
+                  <div style={{ width:`${pct}%`, height:"100%", borderRadius:99,
+                    background:T.green, transition:"width 0.6s" }}/>
+                </div>
+                <div style={{ fontSize:10, color:T.inkLight, marginTop:3 }}>{pct}% completado</div>
+              </div>
+
+              {/* Category mini-bars */}
+              <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:12 }}>
+                {catStats.map(cat => (
+                  <div key={cat.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ fontSize:11, color:T.inkMid, width:90, flexShrink:0 }}>{cat.label}</span>
+                    <div style={{ flex:1, background:T.border, borderRadius:99, height:3, overflow:"hidden" }}>
+                      <div style={{ width:`${(cat.done/cat.items.length)*100}%`, height:"100%",
+                        borderRadius:99, background:T.green }}/>
+                    </div>
+                    <span style={{ fontSize:10, fontWeight:700, color:T.inkLight, width:28, textAlign:"right" }}>
+                      {cat.done}/{cat.items.length}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recent unlocked badges row */}
+              {recent.length > 0 && (
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ fontSize:10, color:T.inkLight, marginRight:2 }}>Recientes:</span>
+                  {recent.map(a => (
+                    <div key={a.id} style={{ width:28, height:28, borderRadius:R.L,
+                      background:a.color, display:"flex", alignItems:"center", justifyContent:"center",
+                      boxShadow:`0 2px 6px ${a.color}50` }}>
+                      {React.cloneElement(ACH_ICON[a.lucide]||<Star size={14}/>,
+                        { color:"#fff", strokeWidth:2, size:14 })}
+                    </div>
+                  ))}
+                  <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:4 }}>
+                    <span style={{ fontSize:11, color:T.inkLight, fontWeight:600 }}>Ver todos</span>
+                    <ArrowLeft size={12} color={T.inkLight} strokeWidth={2}
+                      style={{ transform:"rotate(180deg)" }}/>
+                  </div>
+                </div>
+              )}
+              {recent.length === 0 && (
+                <div style={{ display:"flex", alignItems:"center", gap:6, color:T.inkLight }}>
+                  <span style={{ fontSize:11 }}>Cocina tu primer plato para desbloquear logros →</span>
+                </div>
+              )}
+            </button>
+          );
+        })()}
+
         {/* ── Favorites ── */}
         {favorites.length > 0 && (
           <div style={{ background:T.card, borderRadius:R.XL, overflow:"hidden",
@@ -2893,7 +3531,7 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
             <div style={{ padding:"14px 16px 10px",
               display:"flex", justifyContent:"space-between", alignItems:"center",
               borderBottom:`1px solid ${T.border}` }}>
-              <span style={{ fontSize:14, fontWeight:700, color:T.ink }}>❤️ Favoritos</span>
+              <span style={{ fontSize:14, fontWeight:700, color:T.ink, display:"flex", alignItems:"center", gap:6 }}><Heart size={14} color={T.red} fill={T.red} strokeWidth={2}/> Favoritos</span>
               <span style={{ fontSize:12, color:T.inkLight }}>{favorites.length} recetas</span>
             </div>
             <div style={{ display:"flex", gap:10, padding:"10px 12px 12px",
@@ -2908,7 +3546,7 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
                       style={{ position:"absolute", top:4, right:4, background:"rgba(255,255,255,0.9)",
                         border:"none", borderRadius:R.pill, width:24, height:24, cursor:"pointer",
                         display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>
-                      ❤️
+                      <Heart size={12} color="#e74c3c" fill="#e74c3c" strokeWidth={2}/>
                     </button>
                   </div>
                   <div style={{ fontSize:12, fontWeight:700, color:T.ink,
@@ -2924,7 +3562,7 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
           border:`1px solid ${T.border}`, boxShadow:EL.S, marginBottom:16 }}>
           <div style={{ padding:"14px 16px", borderBottom:`1px solid ${T.border}`,
             display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <span style={{ fontSize:14, fontWeight:700, color:T.ink }}>📅 Recetas cocinadas</span>
+            <span style={{ fontSize:14, fontWeight:700, color:T.ink, display:"flex", alignItems:"center", gap:6 }}><CalendarDays size={14} color={T.green} strokeWidth={2}/> Recetas cocinadas</span>
             <span style={{ fontSize:12, color:T.inkLight }}>{cookHistory.length} preparadas</span>
           </div>
           {cookHistory.length === 0 ? (
@@ -3026,6 +3664,451 @@ function ProfileScreen({ userProfile, onResetOnboarding, favorites=[], onToggleF
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// WeekPlanSetupOverlay — 5-step carousel for first-time weekly planning
+// ─────────────────────────────────────────────────────────────────────────────
+function WeekPlanSetupOverlay({ plan, onSwap, onDone }) {
+  const [step,         setStep]         = useState(0);
+  const [cookStyle,    setCookStyle]    = useState(null);
+  const [prefs,        setPrefs]        = useState(new Set());
+  const [extraPortion, setExtraPortion] = useState(true);
+
+  const TOTAL = 5;
+
+  const COOK_STYLES = [
+    { id:"batch", icon:<RefreshCw size={22}/>, title:"Batch cooking",
+      desc:"Cocinas todo el fin de semana y tienes almuerzo listo para toda la semana.",
+      pill:"🏆 Más popular" },
+    { id:"daily", icon:<Moon size={22}/>, title:"Día a día en la noche",
+      desc:"Preparas el almuerzo del día siguiente cada noche antes de dormir.",
+      pill:null },
+    { id:"free",  icon:<Sun size={22}/>,  title:"Libre",
+      desc:"Cuando tengas tiempo: mañana, tarde o noche. Sin horario fijo.",
+      pill:null },
+  ];
+
+  const [mentaNote,    setMentaNote]    = useState("");
+
+  const PREF_OPTIONS = [
+    { id:"quick",    label:"Rápidas",          sub:"Listas en < 30 min",          icon:<Clock     size={18}/> },
+    { id:"protein",  label:"Alta proteína",     sub:"Más de 30 g por porción",     icon:<Dumbbell  size={18}/> },
+    { id:"lowcal",   label:"Pocas calorías",    sub:"Menos de 400 kcal",           icon:<Flame     size={18}/> },
+    { id:"vegan",    label:"Vegetariano",       sub:"Sin carne ni pescado",        icon:<Leaf      size={18}/> },
+    { id:"budget",   label:"Económicas",        sub:"Ingredientes accesibles",     icon:<ShoppingCart   size={18}/> },
+    { id:"gluten",   label:"Sin gluten",        sub:"Apto para celíacos",          icon:<Wheat     size={18}/> },
+  ];
+
+
+  const STEP_LABELS = [
+    "¿Cómo cocinarás?",
+    "¿Qué tipo de recetas?",
+    "Porción extra",
+    "Tu plan de la semana",
+    "¡Todo listo!",
+  ];
+
+  const togglePref = id => {
+    setPrefs(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); }
+      else              { next.add(id); }
+      return next;
+    });
+  };
+
+  const canGoNext = () => {
+    if (step === 0) return !!cookStyle;
+    if (step === 1) return prefs.size > 0 || mentaNote.trim().length > 0;
+    return true;
+  };
+
+  const goNext = () => { if (canGoNext()) setStep(s => Math.min(s + 1, TOTAL - 1)); };
+  const goBack = () => setStep(s => Math.max(s - 1, 0));
+
+  /* ── step content ── */
+  const renderContent = () => {
+    /* STEP 0 – cook style */
+    if (step === 0) return (
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+        {COOK_STYLES.map(cs => {
+          const active = cookStyle === cs.id;
+          return (
+            <button key={cs.id} onClick={() => setCookStyle(cs.id)} style={{
+              background: active ? T.greenGhost : T.card,
+              border:`2px solid ${active ? T.green : T.border}`,
+              borderRadius:R.XL, padding:"16px", cursor:"pointer", textAlign:"left",
+              display:"flex", alignItems:"flex-start", gap:14,
+              transition:"all 0.2s", boxShadow: active ? EL.M : EL.S }}>
+              <div style={{ width:46, height:46, borderRadius:R.L, flexShrink:0,
+                background: active ? T.green : T.greenPale,
+                display:"flex", alignItems:"center", justifyContent:"center", transition:"background 0.2s" }}>
+                {React.cloneElement(cs.icon, { color: active ? "#fff" : T.green, strokeWidth:2 })}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                  <span style={{ fontSize:15, fontWeight:800, color:T.ink }}>{cs.title}</span>
+                  {cs.pill && <span style={{ background:T.orange, borderRadius:99, padding:"1px 8px",
+                    fontSize:10, fontWeight:800, color:T.ink }}>{cs.pill}</span>}
+                </div>
+                <span style={{ fontSize:12, color:T.inkMid, lineHeight:1.5 }}>{cs.desc}</span>
+              </div>
+              <div style={{ width:22, height:22, borderRadius:R.pill, flexShrink:0, marginTop:2,
+                border:`2px solid ${active ? T.green : T.border}`,
+                background: active ? T.green : "transparent",
+                display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s" }}>
+                {active && <Check size={12} color="#fff" strokeWidth={3}/>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+
+    /* STEP 1 – preferences */
+    if (step === 1) return (
+      <div>
+        <p style={{ margin:"0 0 14px", fontSize:13, color:T.inkMid, lineHeight:1.5 }}>
+          Selecciona una o varias. Las usaremos para sugerirte recetas que se adapten a ti.
+        </p>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:9 }}>
+          {PREF_OPTIONS.map(p => {
+            const active = prefs.has(p.id);
+            return (
+              <button key={p.id} onClick={() => togglePref(p.id)} style={{
+                background: active ? T.greenGhost : T.card,
+                border:`2px solid ${active ? T.green : T.border}`,
+                borderRadius:R.XL, padding:"12px 11px", cursor:"pointer", textAlign:"left",
+                display:"flex", flexDirection:"column", gap:5, transition:"all 0.18s",
+                boxShadow: active ? EL.S : "none" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  {React.cloneElement(p.icon, { color: active ? T.green : T.inkGhost, strokeWidth:2 })}
+                  {active && <Check size={12} color={T.green} strokeWidth={3}/>}
+                </div>
+                <div style={{ fontSize:12, fontWeight:700, color: active ? T.green : T.ink }}>{p.label}</div>
+                <div style={{ fontSize:10, color:T.inkLight, lineHeight:1.3 }}>{p.sub}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Menta free-text option */}
+        <div style={{ marginTop:12, background:T.card, borderRadius:R.XL,
+          border:`1.5px solid ${mentaNote ? T.green : T.border}`,
+          padding:"14px 14px", transition:"border-color 0.2s" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+            <div style={{ width:32, height:32, borderRadius:R.pill, flexShrink:0,
+              background:`linear-gradient(145deg, ${T.green}, ${T.greenMid})`,
+              display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <MentaFace size={24}/>
+            </div>
+            <div>
+              <div style={{ fontSize:13, fontWeight:800, color:T.ink }}>Cuéntale a Menta</div>
+              <div style={{ fontSize:11, color:T.inkLight }}>¿Tienes algo específico en mente para tu semana?</div>
+            </div>
+          </div>
+          <textarea
+            value={mentaNote}
+            onChange={e => setMentaNote(e.target.value)}
+            placeholder='Ej: "Quiero cocina japonesa, sin mariscos y con ingredientes fáciles de conseguir"'
+            rows={3}
+            style={{ width:"100%", resize:"none", border:`1.5px solid ${T.border}`,
+              borderRadius:R.L, padding:"10px 12px", fontSize:12, color:T.ink,
+              fontFamily:"'DM Sans', sans-serif", background:T.surface, outline:"none",
+              lineHeight:1.5, transition:"border-color 0.2s",
+              boxSizing:"border-box" }}
+            onFocus={e => e.target.style.borderColor = T.green}
+            onBlur={e => e.target.style.borderColor = T.border}
+          />
+        </div>
+      </div>
+    );
+
+    /* STEP 2 – extra portion */
+    if (step === 2) return (
+      <div>
+        <div style={{ background:T.greenGhost, borderRadius:R.XL, padding:"14px 16px",
+          border:`1px solid ${T.green}30`, marginBottom:16,
+          display:"flex", gap:10, alignItems:"flex-start" }}>
+          <Utensils size={18} color={T.green} strokeWidth={2} style={{ flexShrink:0, marginTop:2 }}/>
+          <p style={{ margin:0, fontSize:13, color:T.inkMid, lineHeight:1.6 }}>
+            Cocinar una porción extra te da la <strong style={{ color:T.ink }}>cena del mismo día</strong> sin
+            volver a cocinar. Ideal si usas batch cooking o cocinas de noche.
+          </p>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {[
+            { val:true,  title:"Sí, porción extra",
+              desc:"1 cocción = 2 comidas. Las cantidades de ingredientes se ajustan automáticamente.",
+              iconEl:<Check size={18}/> },
+            { val:false, title:"No, solo para ese día",
+              desc:"Cada día cocinas únicamente lo que se consume en el almuerzo de ese día.",
+              iconEl:<X size={18}/> },
+          ].map(opt => {
+            const active = extraPortion === opt.val;
+            return (
+              <button key={String(opt.val)} onClick={() => setExtraPortion(opt.val)} style={{
+                background: active ? T.greenGhost : T.card,
+                border:`2px solid ${active ? T.green : T.border}`,
+                borderRadius:R.XL, padding:"16px", cursor:"pointer", textAlign:"left",
+                display:"flex", alignItems:"flex-start", gap:12,
+                transition:"all 0.18s", boxShadow: active ? EL.S : "none" }}>
+                <div style={{ width:38, height:38, borderRadius:R.pill, flexShrink:0,
+                  background: active ? T.green : T.surface,
+                  border:`2px solid ${active ? T.green : T.border}`,
+                  display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.18s" }}>
+                  {React.cloneElement(opt.iconEl, { color: active ? "#fff" : T.inkLight, strokeWidth:2.5 })}
+                </div>
+                <div>
+                  <div style={{ fontSize:14, fontWeight:800, color: active ? T.green : T.ink, marginBottom:4 }}>
+                    {opt.title}
+                  </div>
+                  <div style={{ fontSize:12, color:T.inkMid, lineHeight:1.5 }}>{opt.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ marginTop:14, background:T.yellowPale, borderRadius:R.L, padding:"10px 14px",
+          border:`1px solid ${T.orange}40`, display:"flex", gap:8, alignItems:"flex-start" }}>
+          <ShoppingCart size={14} color={T.inkMid} strokeWidth={2} style={{ flexShrink:0, marginTop:1 }}/>
+          <p style={{ margin:0, fontSize:11, color:T.inkMid, lineHeight:1.5 }}>
+            Podrás ajustar esto para cada día dentro de tu semana. Ten en cuenta que afecta directamente
+            las <strong>cantidades de ingredientes</strong> en tu lista de compras.
+          </p>
+        </div>
+      </div>
+    );
+
+    /* STEP 3 – plan preview */
+    if (step === 3) return (
+      <div>
+        <p style={{ margin:"0 0 14px", fontSize:13, color:T.inkMid, lineHeight:1.5 }}>
+          Este es tu plan generado. Dale a{" "}
+          <span style={{ display:"inline-flex", alignItems:"center", verticalAlign:"middle",
+            background:T.surface, border:`1px solid ${T.border}`, borderRadius:6, padding:"1px 5px" }}>
+            <RefreshCw size={11} color={T.inkMid} strokeWidth={2}/>
+          </span>
+          {" "}para cambiar cualquier receta.
+        </p>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {plan.map((day, dayIdx) => (
+            <div key={day.day} style={{ background:T.card, borderRadius:R.XL,
+              border:`1px solid ${T.border}`, boxShadow:EL.S, overflow:"hidden" }}>
+              {/* Day header */}
+              <div style={{ padding:"9px 14px", background:T.greenGhost,
+                borderBottom:`1px solid ${T.border}`,
+                display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <span style={{ fontSize:13, fontWeight:800, color:T.green }}>{day.day}</span>
+                <span style={{ fontSize:10, color:T.green, fontWeight:600 }}>
+                  {[day.breakfast, day.lunch].filter(Boolean).length} platos
+                </span>
+              </div>
+              {/* Meals */}
+              {[
+                { slot:"breakfast", label:"Desayuno", icon:<Sunrise size={10} color={T.inkLight} strokeWidth={2}/> },
+                { slot:"lunch",     label:"Almuerzo", icon:<Sun     size={10} color={T.inkLight} strokeWidth={2}/> },
+              ].filter(s => !!day[s.slot]).map(({ slot, label, icon }) => {
+                const r = day[slot];
+                return (
+                  <div key={slot} style={{ padding:"9px 14px",
+                    borderBottom:`1px solid ${T.border}`,
+                    display:"flex", alignItems:"center", gap:10 }}>
+                    <div style={{ width:38, height:38, borderRadius:R.L, overflow:"hidden", flexShrink:0 }}>
+                      <RecipeImg id={r.illus} alt={r.name} width="100%" height="100%"/>
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:10, color:T.inkLight, fontWeight:600,
+                        display:"flex", alignItems:"center", gap:3, marginBottom:1 }}>
+                        {icon} {label}
+                      </div>
+                      <div style={{ fontSize:12, fontWeight:700, color:T.ink,
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.name}</div>
+                      <div style={{ fontSize:10, color:T.inkLight, display:"flex", alignItems:"center", gap:3 }}>
+                        <Flame size={9} color={T.orange} fill={T.orange} strokeWidth={0}/> {r.cal} cal ·{" "}
+                        <Clock size={9} color={T.inkLight} strokeWidth={2}/> {r.time}
+                      </div>
+                    </div>
+                    <button onClick={() => onSwap(dayIdx, slot)}
+                      style={{ width:32, height:32, borderRadius:R.pill, border:`1px solid ${T.border}`,
+                        background:T.surface, cursor:"pointer", display:"flex",
+                        alignItems:"center", justifyContent:"center", flexShrink:0,
+                        transition:"background 0.15s" }}
+                      onMouseEnter={e=>e.currentTarget.style.background=T.greenGhost}
+                      onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
+                      <RefreshCw size={13} color={T.inkMid} strokeWidth={2}/>
+                    </button>
+                  </div>
+                );
+              })}
+              {/* Extra cena badge */}
+              {extraPortion && (
+                <div style={{ padding:"5px 14px", display:"flex", alignItems:"center", gap:5 }}>
+                  <Moon size={9} color={T.inkGhost} strokeWidth={2}/>
+                  <span style={{ fontSize:10, color:T.inkGhost }}>Cena: porción extra del almuerzo</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        {/* Total ingredients */}
+        <div style={{ marginTop:12, background:T.greenGhost, borderRadius:R.L,
+          padding:"10px 14px", border:`1px solid ${T.green}30`,
+          display:"flex", alignItems:"center", gap:8 }}>
+          <ShoppingBasket size={15} color={T.green} strokeWidth={2}/>
+          <span style={{ fontSize:12, color:T.ink, fontWeight:700 }}>
+            Lista de compras:{" "}
+            <strong style={{ color:T.green }}>{(() => {
+              const names = new Set();
+              plan.forEach(d => ["breakfast","lunch"].forEach(sl => {
+                if (d[sl]) (RECIPE_INGREDIENTS[d[sl].id]||[]).forEach(i => names.add(i.name));
+              }));
+              return names.size || "~20";
+            })()} ingredientes</strong> en total
+          </span>
+        </div>
+      </div>
+    );
+
+    /* STEP 4 – confirm */
+    if (step === 4) return (
+      <div style={{ textAlign:"center", paddingTop:8 }}>
+        <div style={{ width:72, height:72, borderRadius:R.pill, background:T.green,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          margin:"0 auto 16px", boxShadow:EL.L }}>
+          <MentaFace size={52}/>
+        </div>
+        <h2 style={{ margin:"0 0 6px", fontSize:22, fontWeight:800, color:T.ink }}>
+          ¡Tu semana está lista!
+        </h2>
+        <p style={{ margin:"0 0 20px", fontSize:13, color:T.inkMid, lineHeight:1.6 }}>
+          Plan configurado con{" "}
+          <strong style={{ color:T.green }}>{COOK_STYLES.find(c=>c.id===cookStyle)?.title}</strong>
+          {prefs.size > 0 && ` · ${prefs.size} preferencia${prefs.size > 1 ? "s" : ""} seleccionada${prefs.size > 1 ? "s" : ""}`}.
+        </p>
+        {/* Summary chips */}
+        <div style={{ display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
+          {[
+            { icon:<RefreshCw size={12} color={T.green} strokeWidth={2}/>,
+              label: COOK_STYLES.find(c=>c.id===cookStyle)?.title },
+            { icon:<Utensils size={12} color={T.green} strokeWidth={2}/>,
+              label: extraPortion ? "Porción extra activada" : "Sin porción extra" },
+            ...(mentaNote.trim() ? [{ icon:<MessageCircle size={12} color={T.green} strokeWidth={2}/>, label:"Nota a Menta" }] : []),
+          ].map(chip => (
+            <div key={chip.label} style={{ background:T.greenGhost, borderRadius:99,
+              padding:"5px 12px", display:"flex", alignItems:"center", gap:6,
+              border:`1px solid ${T.green}30` }}>
+              {chip.icon}
+              <span style={{ fontSize:11, fontWeight:700, color:T.green }}>{chip.label}</span>
+            </div>
+          ))}
+        </div>
+        {/* Warning note */}
+        <div style={{ background:T.yellowPale, borderRadius:R.L, padding:"14px 16px",
+          border:`1px solid ${T.orange}40`, textAlign:"left" }}>
+          <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+            <ShoppingCart size={16} color={T.inkMid} strokeWidth={2} style={{ flexShrink:0, marginTop:1 }}/>
+            <p style={{ margin:0, fontSize:12, color:T.inkMid, lineHeight:1.7 }}>
+              <strong style={{ color:T.ink }}>Puedes cambiar cualquier plato</strong> más adelante
+              desde tu semana. Ten en cuenta que al cambiar un plato,{" "}
+              <strong style={{ color:T.ink }}>la lista de compras se actualiza</strong>{" "}
+              automáticamente con los nuevos ingredientes y cantidades.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const isLast = step === TOTAL - 1;
+
+  return (
+    <div style={{ position:"absolute", inset:0, zIndex:155, background:T.surface,
+      display:"flex", flexDirection:"column", overflow:"hidden",
+      animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}>
+
+      {/* ── Header / progress ── */}
+      <div style={{ background:T.green, padding:"48px 20px 18px", flexShrink:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+          {step > 0 && (
+            <button onClick={goBack} style={{
+              width:34, height:34, borderRadius:R.pill, border:"none",
+              background:"rgba(255,255,255,0.18)", cursor:"pointer",
+              display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <ArrowLeft size={18} color="#fff" strokeWidth={2}/>
+            </button>
+          )}
+          <div style={{ flex:1 }}>
+            <p style={{ margin:"0 0 2px", color:"rgba(255,255,255,0.65)", fontSize:11,
+              fontWeight:700, textTransform:"uppercase", letterSpacing:1 }}>
+              Paso {step + 1} de {TOTAL}
+            </p>
+            <h2 style={{ margin:0, color:"#fff", fontSize:19, fontWeight:800,
+              fontFamily:"'DM Sans', sans-serif" }}>
+              {STEP_LABELS[step]}
+            </h2>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+          {Array.from({ length: TOTAL }).map((_, i) => (
+            <div key={i} style={{
+              height:4, borderRadius:99,
+              flex: i === step ? 2.2 : 1,
+              background: i <= step ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.28)",
+              transition:"all 0.4s ease"
+            }}/>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Scrollable content ── */}
+      <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"20px 16px 0" }}>
+        {renderContent()}
+        <div style={{ height:16 }}/>
+      </div>
+
+      {/* ── Bottom nav ── */}
+      <div style={{ padding:"12px 16px 28px", flexShrink:0,
+        borderTop:`1px solid ${T.border}`, background:T.surface }}>
+        {isLast ? (
+          <button onClick={onDone} style={{
+            width:"100%", padding:"15px", borderRadius:R.L, border:"none",
+            background:T.orange, color:T.ink, fontSize:15, fontWeight:800, cursor:"pointer",
+            boxShadow:EL.M, fontFamily:"'DM Sans', sans-serif",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <Check size={18} color={T.ink} strokeWidth={2.5}/>
+            Confirmar plan semanal
+          </button>
+        ) : (
+          <div style={{ display:"flex", gap:10 }}>
+            {step > 0 && (
+              <button onClick={goBack} style={{
+                flex:1, padding:"13px", borderRadius:R.L,
+                border:`1.5px solid ${T.border}`, background:"transparent",
+                color:T.inkMid, fontSize:14, fontWeight:700, cursor:"pointer",
+                fontFamily:"'DM Sans', sans-serif",
+                display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                <ArrowLeft size={15} color={T.inkMid} strokeWidth={2}/> Atrás
+              </button>
+            )}
+            <button onClick={goNext} disabled={!canGoNext()} style={{
+              flex: step === 0 ? 1 : 2, padding:"13px", borderRadius:R.L, border:"none",
+              background: canGoNext() ? T.green : T.border,
+              color: canGoNext() ? "#fff" : T.inkGhost,
+              fontSize:14, fontWeight:800, cursor: canGoNext() ? "pointer" : "not-allowed",
+              fontFamily:"'DM Sans', sans-serif", transition:"all 0.2s",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+              Siguiente
+              <ArrowLeft size={15} color={canGoNext() ? "#fff" : T.inkGhost}
+                strokeWidth={2} style={{ transform:"rotate(180deg)" }}/>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // src/navigation/BottomTabBar
 // ─────────────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -3038,46 +4121,82 @@ const TABS = [
 
 function BottomTabBar({ active, onChange }) {
   return (
-    <div style={{ position:"absolute", bottom:0, left:0, right:0,
-      background:"rgba(252,255,244,0.97)", backdropFilter:"blur(20px)",
-      borderTop:`1px solid ${T.border}`, padding:"8px 0 22px",
-      display:"flex", justifyContent:"space-around", alignItems:"flex-end", zIndex:100 }}>
+    <div style={{
+      position:"absolute", bottom:16, left:12, right:12,
+      display:"flex", justifyContent:"space-around", alignItems:"center",
+      zIndex:100, pointerEvents:"none",
+    }}>
+      {/* Floating pill */}
+      <div style={{
+        position:"absolute", inset:0,
+        background:"rgba(255,255,255,0.88)",
+        backdropFilter:"blur(24px)",
+        WebkitBackdropFilter:"blur(24px)",
+        borderRadius:40,
+        boxShadow:`0 8px 32px rgba(21,96,100,0.18), 0 2px 8px rgba(21,96,100,0.10), 0 0 0 1px rgba(255,255,255,0.7)`,
+      }}/>
+
       {TABS.map(tab => {
         const isActive = active === tab.key;
         const isMenta  = tab.key === "chat";
+
         if (isMenta) return (
-          <button key={tab.key} onClick={() => onChange(tab.key)} style={{
-            background:"none", border:"none", cursor:"pointer", padding:"0 6px",
-            display:"flex", flexDirection:"column", alignItems:"center", gap:2,
-            transform:"translateY(-10px)" }}>
+          <button key={tab.key} onClick={() => onChange(tab.key)}
+            style={{ background:"none", border:"none", cursor:"pointer", padding:"0 4px",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+              transform:"translateY(-18px)", pointerEvents:"all", position:"relative", zIndex:2 }}>
+            {/* Outer glow ring when active */}
+            {isActive && (
+              <div style={{
+                position:"absolute", top:-4, left:"50%", transform:"translateX(-50%)",
+                width:64, height:64, borderRadius:R.pill,
+                background:`${T.orange}30`,
+                animation:"pulse 2s infinite"
+              }}/>
+            )}
             <div style={{
-              width:54, height:54, borderRadius:R.pill,
-              background: isActive ? T.green : `linear-gradient(135deg, ${T.green}, ${T.greenLight})`,
+              width:56, height:56, borderRadius:R.pill,
+              background:`linear-gradient(145deg, ${T.green}, ${T.greenMid})`,
               display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow: `${EL.L}, 0 0 0 4px ${T.surface}`,
-              border: isActive ? `3px solid ${T.orange}` : "3px solid transparent",
-              transition:"all 0.25s" }}>
-              <MentaFace size={38} />
+              boxShadow: isActive
+                ? `0 0 0 3px ${T.orange}, 0 8px 24px rgba(21,96,100,0.40)`
+                : `0 0 0 3px rgba(255,255,255,0.9), 0 6px 20px rgba(21,96,100,0.30)`,
+              transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)" }}>
+              <MentaFace size={40} />
             </div>
-            <span style={{ fontSize:12, fontWeight:800, color: isActive ? T.green : T.inkLight,
-              letterSpacing:0.4, fontFamily:"'DM Sans', sans-serif" }}>Menta</span>
+            <span style={{ fontSize:11, fontWeight:800,
+              color: isActive ? T.green : T.inkLight,
+              letterSpacing:0.3, fontFamily:"'DM Sans', sans-serif",
+              textShadow:"0 1px 2px rgba(255,255,255,0.8)" }}>
+              Menta
+            </span>
           </button>
         );
+
         return (
-          <button key={tab.key} onClick={() => onChange(tab.key)} style={{
-            background:"none", border:"none", display:"flex", flexDirection:"column",
-            alignItems:"center", gap:2, cursor:"pointer", padding:"4px 8px", minWidth:0 }}>
-            <div style={{ position:"relative", padding:"2px" }}>
-              <Icon name={tab.icon} size={21}
+          <button key={tab.key} onClick={() => onChange(tab.key)}
+            style={{ background:"none", border:"none", cursor:"pointer",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+              padding:"10px 10px 10px", minWidth:0, pointerEvents:"all",
+              position:"relative", zIndex:2, flex:1 }}>
+            {/* Active pill highlight */}
+            {isActive && (
+              <div style={{
+                position:"absolute", top:6, left:"50%", transform:"translateX(-50%)",
+                width:40, height:34, borderRadius:14,
+                background: T.greenGhost,
+                transition:"all 0.2s"
+              }}/>
+            )}
+            <div style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", justifyContent:"center", height:24 }}>
+              <Icon name={tab.icon} size={20}
                 color={isActive ? T.green : T.inkGhost}
                 strokeWidth={isActive ? 2.2 : 1.6} />
-              {isActive && <div style={{ position:"absolute", bottom:-5, left:"50%",
-                transform:"translateX(-50%)", width:16, height:3, borderRadius:99,
-                background:T.green }} />}
             </div>
-            <span style={{ fontSize:12, fontWeight: isActive ? 800 : 500,
-              color: isActive ? T.green : T.inkGhost, letterSpacing:0.4,
-              fontFamily:"'DM Sans', sans-serif" }}>
+            <span style={{ fontSize:10, fontWeight: isActive ? 800 : 500,
+              color: isActive ? T.green : T.inkGhost,
+              letterSpacing:0.3, fontFamily:"'DM Sans', sans-serif",
+              position:"relative", zIndex:1 }}>
               {tab.label}
             </span>
           </button>
@@ -3189,7 +4308,7 @@ function OnboardingScreen({ onDone }) {
   const [spendPerMeal, setSpendPerMeal] = useState(12000); // COP gasto afuera
   const [cookSchedule, setCookSchedule] = useState("");    // implementation intention
 
-  const TOTAL = 8;   // 8 steps total
+  const TOTAL = 8;   // 8 steps total (0–7, last = promise screen)
   const toggleGoal = g => setGoals(prev => prev.includes(g) ? prev.filter(x=>x!==g) : [...prev,g]);
   const [otherAllergy, setOtherAllergy] = useState("");  // free-text restriction
 
@@ -3588,6 +4707,132 @@ function OnboardingScreen({ onDone }) {
         ))}
       </div>
     </div>,
+
+    /* ── STEP 7: Promise screen ── */
+    <div key={7} style={{ flex:1, display:"flex", flexDirection:"column",
+      background:`linear-gradient(160deg, ${T.green} 0%, ${T.greenLight} 100%)`,
+      padding:"52px 24px 28px", overflowY:"auto", scrollbarWidth:"none" }}>
+
+      {/* Menta + header */}
+      <div style={{ textAlign:"center", marginBottom:28 }}>
+        <div style={{ animation:"mentaBounce 1.1s ease-in-out infinite", marginBottom:16 }}>
+          <MentaFace size={80}/>
+        </div>
+        <h1 style={{ margin:"0 0 6px", color:"#fff", fontSize:22, fontWeight:800,
+          fontFamily:"'DM Sans', sans-serif", lineHeight:1.2 }}>
+          Tu promesa de 3 semanas
+        </h1>
+        <p style={{ margin:0, color:"rgba(255,255,255,0.75)", fontSize:13, lineHeight:1.5 }}>
+          Cocinando <strong style={{ color:"#fff" }}>5 veces por semana</strong> con Menta,
+          esto es lo que podrías lograr:
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      {(() => {
+        const meals    = 15; // 3 semanas × 5 días
+        const costHome = 4500;
+        const saved    = (spendPerMeal - costHome) * meals;
+
+        // Nutritional promise depends on diet
+        const isVeg   = diet === "veg" || diet === "vegan";
+        const isHighP = diet === "highp";
+
+        const nutritionStat = isVeg
+          ? { val:`${meals}`, unit:"comidas", label:"sin carne en 3 semanas", sub:"Menos colesterol · más fibra · más energía", color:"#4CAF50" }
+          : isHighP
+          ? { val:`~${meals*28}g`, unit:"", label:"más proteína en 3 semanas", sub:`vs comer afuera (${meals}×28g extra/comida)`, color:"#FF7043" }
+          : { val:`~${meals*12}g`, unit:"", label:"más proteína en 3 semanas", sub:`vs restaurante (${meals}×12g extra/comida aprox.)`, color:"#FF7043" };
+
+        // Third stat based on top goal
+        const thirdStat = (() => {
+          if (goals.includes("save_time"))
+            return { val:"~3h", unit:"/semana", label:"libres sin decidir qué comer", sub:"Menta lo decide por ti cada domingo", color:"#29B6F6" };
+          if (goals.includes("organize"))
+            return { val:`${meals}`, unit:"almuerzos", label:"planificados de antemano", sub:"Nunca más el \"¿qué como hoy?\"", color:"#AB47BC" };
+          if (goals.includes("healthy"))
+            return { val:`${meals}`, unit:"comidas", label:"balanceadas y caseras", sub:"Con macros calculados para tu cuerpo", color:"#66BB6A" };
+          if (goals.includes("explore"))
+            return { val:"~8", unit:"recetas", label:"nuevas que vas a descubrir", sub:"Rotación semanal de tu plan Menta", color:"#FFA726" };
+          return { val:"21", unit:"días", label:"de hábito formado", sub:"Después de 21 días es automatismo, no esfuerzo", color:"#26C6DA" };
+        })();
+
+        const cards = [
+          {
+            icon: <ShoppingCart size={22} color="#fff" strokeWidth={2}/>,
+            bg: "rgba(255,255,255,0.18)",
+            mainVal: `$${(saved/1000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,".")}`,
+            mainUnit: "COP",
+            label: "ahorrados cocinando en casa",
+            sub: `vs pagar $${(spendPerMeal/1000).toFixed(0)}k por almuerzo afuera`,
+            highlight: true,
+          },
+          {
+            icon: <Flame size={22} color="#fff" strokeWidth={2}/>,
+            bg: "rgba(255,255,255,0.13)",
+            mainVal: nutritionStat.val,
+            mainUnit: nutritionStat.unit,
+            label: nutritionStat.label,
+            sub: nutritionStat.sub,
+            highlight: false,
+          },
+          {
+            icon: <Sparkles size={22} color="#fff" strokeWidth={2}/>,
+            bg: "rgba(255,255,255,0.13)",
+            mainVal: thirdStat.val,
+            mainUnit: thirdStat.unit,
+            label: thirdStat.label,
+            sub: thirdStat.sub,
+            highlight: false,
+          },
+        ];
+
+        return (
+          <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:20 }}>
+            {cards.map((c, i) => (
+              <div key={i} style={{ background: c.highlight ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.13)",
+                border: c.highlight ? "1.5px solid rgba(255,255,255,0.4)" : "1.5px solid rgba(255,255,255,0.15)",
+                borderRadius:R.XL, padding:"16px 18px",
+                boxShadow: c.highlight ? "0 8px 24px rgba(0,0,0,0.15)" : "none" }}>
+                <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                  <div style={{ width:42, height:42, borderRadius:R.L, flexShrink:0,
+                    background:"rgba(255,255,255,0.2)",
+                    display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {c.icon}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"baseline", gap:5, marginBottom:2 }}>
+                      <span style={{ fontSize: c.highlight ? 28 : 22, fontWeight:900, color:"#fff",
+                        lineHeight:1, fontFamily:"'DM Sans', sans-serif" }}>
+                        {c.mainVal}
+                      </span>
+                      {c.mainUnit && (
+                        <span style={{ fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.75)" }}>
+                          {c.mainUnit}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:3 }}>
+                      {c.label}
+                    </div>
+                    <div style={{ fontSize:11, color:"rgba(255,255,255,0.65)", lineHeight:1.4 }}>
+                      {c.sub}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Footer disclaimer */}
+      <div style={{ textAlign:"center" }}>
+        <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,0.5)", lineHeight:1.5 }}>
+          Estimados basados en tu perfil · Los resultados reales varían según tus hábitos
+        </p>
+      </div>
+    </div>,
   ];
 
   return (
@@ -3624,7 +4869,7 @@ function OnboardingScreen({ onDone }) {
             fontSize:16, fontWeight:700, cursor: nextDisabled ? "not-allowed" : "pointer",
             fontFamily:"'DM Sans', sans-serif", boxShadow: nextDisabled ? "none" : EL.M,
             transition:"all 0.2s" }}>
-          {step === TOTAL-1 ? "Comenzar 🌿" : step === 0 ? "Continuar" : "Continuar"}
+          {step === TOTAL-1 ? "¡Comenzar mi plan! 🌿" : step === TOTAL-2 ? "Ver mi promesa →" : step === 0 ? "Continuar" : "Continuar"}
         </button>
         {step > 0 && (
           <button onClick={()=>setStep(s=>s-1)} style={{ width:"100%", marginTop:8, padding:"10px",
@@ -3733,25 +4978,9 @@ function ChatScreen({ userProfile, initUrl }) {
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden",
       paddingBottom:80 }}>
-      {/* Header with proactive timely nudge */}
+      {/* Header */}
       <div style={{ background:T.green,
         padding:"52px 20px 20px", flexShrink:0 }}>
-        {/* Proactive nudge — Thaler: timely nudges 3-5x more effective */}
-        {(() => {
-          const h = new Date().getHours(), d = new Date().getDay();
-          const nudge = d===0&&h>=16&&h<20 ? "🍳 Son las "+h+":00 del domingo — ¿preparamos tu semana?"
-            : d===6&&h>=16 ? "📅 Revisemos tu plan antes de que empiece la semana"
-            : d===0&&h>=9&&h<12 ? "🛒 Tu lista está lista — ¿a qué hora vas al mercado?"
-            : null;
-          return nudge ? (
-            <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:R.L,
-              padding:"10px 14px", marginBottom:12,
-              display:"flex", alignItems:"center", gap:8 }}>
-              <MentaFace size={22}/>
-              <span style={{ color:"#fff", fontSize:12, fontWeight:600 }}>{nudge}</span>
-            </div>
-          ) : null;
-        })()}
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           <div style={{ position:"relative" }}>
             <MentaFace size={56} />
@@ -3886,6 +5115,385 @@ function ChatScreen({ userProfile, initUrl }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MentaNotification — simulated push notification (appears after 30s)
+// ─────────────────────────────────────────────────────────────────────────────
+function MentaNotification({ taskCount, onTap, onDismiss }) {
+  const [visible,  setVisible]  = useState(false);
+  const [leaving,  setLeaving]  = useState(false);
+
+  useEffect(() => {
+    // Slide in
+    const t1 = setTimeout(() => setVisible(true), 50);
+    // Auto-dismiss after 9s if untouched
+    const t2 = setTimeout(() => dismiss(), 9000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const dismiss = () => {
+    setLeaving(true);
+    setTimeout(() => onDismiss(), 380);
+  };
+
+  const handleTap = () => {
+    setLeaving(true);
+    setTimeout(() => { onDismiss(); onTap(); }, 280);
+  };
+
+  return (
+    <div style={{
+      position:"absolute", top:54, left:12, right:12, zIndex:300,
+      transform: visible && !leaving ? "translateY(0)" : "translateY(-110px)",
+      opacity:   visible && !leaving ? 1 : 0,
+      transition:"transform 0.42s cubic-bezier(0.34,1.4,0.64,1), opacity 0.35s ease",
+      pointerEvents:"all",
+    }}>
+      <div style={{
+        background:"rgba(13,31,31,0.97)",
+        borderRadius:20,
+        boxShadow:`0 12px 40px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.08)`,
+        overflow:"hidden",
+      }}>
+        {/* Top bar — mimics iOS notification header */}
+        <div style={{ padding:"9px 14px 0",
+          display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ width:14, height:14, borderRadius:4,
+            background:`linear-gradient(145deg, ${T.green}, ${T.greenMid})`,
+            display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <MentaFace size={11}/>
+          </div>
+          <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.5)",
+            textTransform:"uppercase", letterSpacing:0.8, flex:1 }}>Menta · ahora</span>
+          <button onClick={dismiss} style={{ background:"none", border:"none",
+            cursor:"pointer", padding:"2px", display:"flex", alignItems:"center" }}>
+            <X size={13} color="rgba(255,255,255,0.4)" strokeWidth={2}/>
+          </button>
+        </div>
+
+        {/* Main tap area */}
+        <button onClick={handleTap} style={{
+          width:"100%", background:"none", border:"none", cursor:"pointer",
+          padding:"8px 14px 14px", textAlign:"left",
+          display:"flex", alignItems:"center", gap:12 }}>
+          {/* Menta avatar */}
+          <div style={{ width:44, height:44, borderRadius:R.pill, flexShrink:0,
+            background:`linear-gradient(145deg, ${T.green}, ${T.greenMid})`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            boxShadow:`0 0 0 2.5px rgba(255,255,255,0.15), 0 4px 12px rgba(21,96,100,0.4)` }}>
+            <MentaFace size={34}/>
+          </div>
+          {/* Text */}
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:3,
+              lineHeight:1.3 }}>
+              Tienes {taskCount} actividad{taskCount !== 1 ? "es" : ""} para los platos de mañana
+            </div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", lineHeight:1.4 }}>
+              ¿Las hacemos ya? Solo toma unos minutos →
+            </div>
+          </div>
+          {/* Pulse dot */}
+          <div style={{ width:8, height:8, borderRadius:R.pill, background:T.orange,
+            flexShrink:0, boxShadow:`0 0 0 3px ${T.orange}40`,
+            animation:"pulse 1.8s infinite" }}/>
+        </button>
+
+        {/* Progress bar that counts down the auto-dismiss */}
+        <div style={{ height:2, background:"rgba(255,255,255,0.06)" }}>
+          <div style={{ height:"100%", background:`${T.green}80`, borderRadius:99,
+            animation:"videoProgress 9s linear forwards" }}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACHIEVEMENTS — Gamification data
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ACHIEVEMENTS — categorized gamification data
+// ─────────────────────────────────────────────────────────────────────────────
+const ACH_CATEGORIES = [
+  {
+    id:"streak", label:"🔥 Racha", desc:"Días cocinando consecutivos",
+    items:[
+      { id:"day1",       color:"#FF6B35", lucide:"flame",    title:"Chispa",            desc:"Tu primer día cocinando con Menta",        metric:"dayStreak",    target:1,   xp:50   },
+      { id:"day3",       color:"#FF6B35", lucide:"flame",    title:"En caliente",       desc:"3 días seguidos en la cocina",             metric:"dayStreak",    target:3,   xp:100  },
+      { id:"week",       color:"#E64A19", lucide:"calendar", title:"Guerrero semanal",  desc:"7 días cocinando sin parar",               metric:"dayStreak",    target:7,   xp:250  },
+      { id:"two_weeks",  color:"#BF360C", lucide:"calendar", title:"Dos semanas",       desc:"14 días cocinando seguidos",               metric:"dayStreak",    target:14,  xp:400  },
+      { id:"month",      color:"#B5860D", lucide:"trophy",   title:"Mes de oro",        desc:"30 días cocinando consecutivos",           metric:"dayStreak",    target:30,  xp:1000 },
+      { id:"hundred",    color:"#827717", lucide:"star",     title:"Centenario",        desc:"100 días de racha. Una locura.",           metric:"dayStreak",    target:100, xp:2000 },
+      { id:"year",       color:"#4A148C", lucide:"sparkles", title:"Leyenda Menta",     desc:"365 días. Eres una institución.",          metric:"dayStreak",    target:365, xp:5000 },
+    ]
+  },
+  {
+    id:"cooking", label:"🍳 Cocinando", desc:"Total de platos preparados",
+    items:[
+      { id:"cook1",      color:"#FF8F00", lucide:"utensils", title:"Primera llama",     desc:"Cocinaste tu primer plato con Menta",      metric:"totalCooked",  target:1,   xp:100  },
+      { id:"cook5",      color:"#F57F17", lucide:"utensils", title:"Cocinero casual",   desc:"5 platos preparados en casa",             metric:"totalCooked",  target:5,   xp:150  },
+      { id:"cook10",     color:"#E65100", lucide:"utensils", title:"10 platos",         desc:"10 platos cocinados. ¡Vas muy bien!",      metric:"totalCooked",  target:10,  xp:200  },
+      { id:"cook25",     color:"#BF360C", lucide:"chef-hat", title:"Sous-chef",         desc:"25 platos. Ya tienes mano.",               metric:"totalCooked",  target:25,  xp:400  },
+      { id:"cook50",     color:"#C62828", lucide:"chef-hat", title:"Chef de cocina",    desc:"50 platos preparados en casa",             metric:"totalCooked",  target:50,  xp:700  },
+      { id:"cook100",    color:"#880E4F", lucide:"award",    title:"Centenario chef",   desc:"100 platos. Deberías abrir un restaurante",metric:"totalCooked",  target:100, xp:1500 },
+      { id:"batch3",     color:"#00695C", lucide:"package",  title:"Rey del batch",     desc:"3 sesiones de batch cooking completadas",  metric:"batchSessions",target:3,   xp:300  },
+      { id:"batch10",    color:"#004D40", lucide:"package",  title:"Batch master",      desc:"10 sesiones de batch. Eficiencia pura.",   metric:"batchSessions",target:10,  xp:600  },
+      { id:"prep5",      color:"#F57F17", lucide:"sunrise",  title:"Prep nocturno",     desc:"5 tareas de prep adelantadas",             metric:"earlyBird",    target:5,   xp:200  },
+      { id:"prep15",     color:"#E65100", lucide:"sunrise",  title:"Rey del prep",      desc:"15 tareas adelantadas. Eres un crack.",    metric:"earlyBird",    target:15,  xp:400  },
+    ]
+  },
+  {
+    id:"nutrition", label:"💪 Nutrición", desc:"Logros de alimentación consciente",
+    items:[
+      { id:"veg5",       color:"#2E7D32", lucide:"leaf",     title:"Herbívoro curioso", desc:"5 platos vegetarianos preparados",         metric:"vegCooked",    target:5,   xp:150  },
+      { id:"veg15",      color:"#1B5E20", lucide:"leaf",     title:"Héroe vegetal",     desc:"15 platos vegetarianos cocinados",          metric:"vegCooked",    target:15,  xp:400  },
+      { id:"veg30",      color:"#33691E", lucide:"leaf",     title:"Veggie pro",        desc:"30 platos vegetarianos. El planeta te ama", metric:"vegCooked",    target:30,  xp:700  },
+      { id:"prot10",     color:"#C62828", lucide:"dumbbell", title:"Cargado",           desc:"10 platos con más de 25g de proteína",     metric:"highProtein",  target:10,  xp:250  },
+      { id:"prot20",     color:"#B71C1C", lucide:"dumbbell", title:"Rey de proteínas",  desc:"20 platos high-protein. Músculos felices", metric:"highProtein",  target:20,  xp:400  },
+      { id:"prot50",     color:"#7F0000", lucide:"dumbbell", title:"Máquina anabólica", desc:"50 platos con +25g proteína. Una bestia.", metric:"highProtein",  target:50,  xp:900  },
+      { id:"macro5",     color:"#37474F", lucide:"sparkles", title:"Maestro de macros", desc:"5 días cumpliendo tus macros del día",     metric:"macroDays",    target:5,   xp:300  },
+      { id:"macro21",    color:"#263238", lucide:"sparkles", title:"Hábito formado",    desc:"21 días cumpliendo macros. Ya es rutina.", metric:"macroDays",    target:21,  xp:600  },
+    ]
+  },
+  {
+    id:"savings", label:"💰 Ahorro", desc:"Dinero ahorrado cocinando en casa",
+    items:[
+      { id:"save50k",    color:"#6A1B9A", lucide:"banknote", title:"Primer ahorro",     desc:"$50.000 COP ahorrados cocinando en casa",  metric:"savings",   target:50000,   xp:100  },
+      { id:"save200k",   color:"#4A148C", lucide:"banknote", title:"Ahorro consciente", desc:"$200.000 COP en tu bolsillo",              metric:"savings",   target:200000,  xp:250  },
+      { id:"save500k",   color:"#38006b", lucide:"banknote", title:"Ahorro millonario", desc:"$500.000 COP ahorrados",                   metric:"savings",   target:500000,  xp:500  },
+      { id:"save1m",     color:"#B5860D", lucide:"trophy",   title:"Inversor gourmet",  desc:"$1.000.000 COP cocinando en casa",         metric:"savings",   target:1000000, xp:1000 },
+      { id:"save2m",     color:"#7B3F00", lucide:"award",    title:"Millonario Menta",  desc:"$2.000.000 COP. Vacaciones pagadas.",       metric:"savings",   target:2000000, xp:2000 },
+    ]
+  },
+  {
+    id:"variety", label:"🌍 Variedad", desc:"Exploración culinaria",
+    items:[
+      { id:"unique3",    color:"#0277BD", lucide:"compass",  title:"Explorador",        desc:"Cocinaste 3 recetas diferentes",           metric:"uniqueCount", target:3,  xp:100  },
+      { id:"unique10",   color:"#01579B", lucide:"compass",  title:"Chef del mundo",    desc:"10 recetas distintas en tu haber",         metric:"uniqueCount", target:10, xp:300  },
+      { id:"unique20",   color:"#003c8f", lucide:"compass",  title:"Gastrónomo",        desc:"20 recetas distintas. Buen paladar.",      metric:"uniqueCount", target:20, xp:500  },
+      { id:"unique30",   color:"#1A237E", lucide:"star",     title:"Coleccionista",     desc:"30 recetas diferentes cocinadas",          metric:"uniqueCount", target:30, xp:800  },
+      { id:"repeat3",    color:"#558B2F", lucide:"refresh-cw",title:"Receta favorita",  desc:"Mismo plato cocinado 3 veces",             metric:"maxRepeat",   target:3,  xp:150  },
+      { id:"repeat7",    color:"#33691E", lucide:"refresh-cw",title:"Fiel al sabor",    desc:"Mismo plato 7 veces. El clásico de casa.", metric:"maxRepeat",   target:7,  xp:300  },
+    ]
+  },
+];
+
+// Flat list for backward compat
+const ACHIEVEMENTS = ACH_CATEGORIES.flatMap(cat => cat.items.map(i => ({...i, cat:cat.id})));
+
+const ACH_ICON = {
+  flame:<Flame size={20}/>, calendar:<CalendarDays size={20}/>, trophy:<Award size={20}/>,
+  leaf:<Leaf size={20}/>, banknote:<ShoppingCart size={20}/>, compass:<Compass size={20}/>,
+  dumbbell:<Dumbbell size={20}/>, "refresh-cw":<RefreshCw size={20}/>, sunrise:<Sunrise size={20}/>,
+  package:<ShoppingBasket size={20}/>, utensils:<Utensils size={20}/>, sparkles:<Sparkles size={20}/>,
+  star:<Star size={20}/>, award:<Award size={20}/>, "chef-hat":<ChefHat size={20}/>,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AchievementsScreen — full-screen overlay with categorized logros
+// ─────────────────────────────────────────────────────────────────────────────
+function AchievementsScreen({ streak, achStats, onBack }) {
+  const [activeFilter, setActiveFilter] = useState("all"); // "all" | cat.id
+
+  const getProgress = (ach) => {
+    const val = ach.metric === "dayStreak"   ? streak.current
+              : ach.metric === "uniqueCount" ? (achStats.uniqueIds||[]).length
+              : (achStats[ach.metric] || 0);
+    const pct  = Math.min(val / ach.target, 1);
+    return { val, pct, done: pct >= 1 };
+  };
+
+  const allItems   = ACHIEVEMENTS;
+  const unlocked   = allItems.filter(a => getProgress(a).done);
+  const totalXP    = unlocked.reduce((s,a)=>s+a.xp,0) + streak.current*10;
+  const completion = Math.round((unlocked.length / allItems.length) * 100);
+
+  const cats = activeFilter === "all" ? ACH_CATEGORIES
+    : ACH_CATEGORIES.filter(c => c.id === activeFilter);
+
+  const formatSavings = (v, target) => {
+    if (target >= 1000000) return `$${(v/1000000).toFixed(1)}M / $${(target/1000000).toFixed(1)}M`;
+    return `$${(v/1000).toFixed(0)}k / $${(target/1000).toFixed(0)}k`;
+  };
+
+  return (
+    <div style={{ position:"absolute", inset:0, zIndex:140, background:T.surface,
+      display:"flex", flexDirection:"column", overflow:"hidden",
+      animation:"slideUp 0.32s cubic-bezier(0.34,1.4,0.64,1)" }}>
+
+      {/* ── Header ── */}
+      <div style={{ background:T.green, padding:"48px 20px 0", flexShrink:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+          <button onClick={onBack} style={{ width:36, height:36, borderRadius:R.pill,
+            border:"none", background:"rgba(255,255,255,0.18)", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <ArrowLeft size={18} color="#fff" strokeWidth={2}/>
+          </button>
+          <div style={{ flex:1 }}>
+            <h2 style={{ margin:0, color:"#fff", fontSize:20, fontWeight:800 }}>Logros</h2>
+          </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", fontWeight:600 }}>XP total</div>
+            <div style={{ fontSize:18, fontWeight:900, color:T.orange }}>{totalXP.toLocaleString()}</div>
+          </div>
+        </div>
+
+        {/* Global progress bar */}
+        <div style={{ marginBottom:14 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+            <span style={{ fontSize:11, color:"rgba(255,255,255,0.7)", fontWeight:600 }}>
+              {unlocked.length} de {allItems.length} logros desbloqueados
+            </span>
+            <span style={{ fontSize:11, color:"rgba(255,255,255,0.9)", fontWeight:800 }}>{completion}%</span>
+          </div>
+          <div style={{ background:"rgba(255,255,255,0.2)", borderRadius:99, height:6, overflow:"hidden" }}>
+            <div style={{ width:`${completion}%`, height:"100%", borderRadius:99,
+              background:"#fff", transition:"width 0.6s ease",
+              boxShadow:"0 0 8px rgba(255,255,255,0.6)" }}/>
+          </div>
+        </div>
+
+        {/* Category filter chips */}
+        <div style={{ display:"flex", gap:6, overflowX:"auto", scrollbarWidth:"none",
+          paddingBottom:14 }}>
+          {[{id:"all",label:"Todos"}, ...ACH_CATEGORIES.map(c=>({id:c.id,label:c.label}))].map(f => (
+            <button key={f.id} onClick={()=>setActiveFilter(f.id)} style={{
+              flexShrink:0, padding:"5px 13px", borderRadius:99, border:"none", cursor:"pointer",
+              fontSize:12, fontWeight:700,
+              background: activeFilter===f.id ? "#fff" : "rgba(255,255,255,0.15)",
+              color:       activeFilter===f.id ? T.green : "rgba(255,255,255,0.85)",
+              transition:"all 0.15s" }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Scrollable content ── */}
+      <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"16px 16px 32px" }}>
+
+        {cats.map(cat => {
+          const catItems    = cat.items;
+          const catUnlocked = catItems.filter(a => getProgress(a).done).length;
+          return (
+            <div key={cat.id} style={{ marginBottom:24 }}>
+              {/* Category header */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+                marginBottom:10 }}>
+                <div>
+                  <div style={{ fontSize:16, fontWeight:800, color:T.ink }}>{cat.label}</div>
+                  <div style={{ fontSize:11, color:T.inkLight }}>{cat.desc}</div>
+                </div>
+                <div style={{ background:T.greenGhost, borderRadius:99, padding:"3px 10px" }}>
+                  <span style={{ fontSize:11, fontWeight:800, color:T.green }}>
+                    {catUnlocked}/{catItems.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Unlocked items — 2-column grid */}
+              {(() => {
+                const done   = catItems.filter(a => getProgress(a).done);
+                const pending = catItems.filter(a => !getProgress(a).done);
+                return (
+                  <>
+                    {done.length > 0 && (
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
+                        {done.map(ach => (
+                          <div key={ach.id} style={{
+                            background:`${ach.color}12`, border:`1.5px solid ${ach.color}35`,
+                            borderRadius:R.XL, padding:"12px", position:"relative", overflow:"hidden" }}>
+                            {/* Glow spot */}
+                            <div style={{ position:"absolute", top:-10, right:-10, width:44, height:44,
+                              borderRadius:R.pill, background:`${ach.color}25` }}/>
+                            <div style={{ width:34, height:34, borderRadius:R.L, marginBottom:8,
+                              background:ach.color, display:"flex", alignItems:"center",
+                              justifyContent:"center" }}>
+                              {React.cloneElement(ACH_ICON[ach.lucide]||<Star size={20}/>,
+                                { color:"#fff", strokeWidth:2 })}
+                            </div>
+                            <div style={{ fontSize:12, fontWeight:800, color:T.ink, marginBottom:2 }}>
+                              {ach.title}
+                            </div>
+                            <div style={{ fontSize:10, color:T.inkMid, lineHeight:1.3, marginBottom:7 }}>
+                              {ach.desc}
+                            </div>
+                            <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                              <div style={{ width:16, height:16, borderRadius:R.pill, background:ach.color,
+                                display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                <Check size={9} color="#fff" strokeWidth={3}/>
+                              </div>
+                              <span style={{ fontSize:10, fontWeight:800, color:ach.color }}>+{ach.xp} XP</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pending items — list */}
+                    {pending.length > 0 && (
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {pending.map(ach => {
+                          const { val, pct } = getProgress(ach);
+                          const displayVal = ach.metric === "savings"
+                            ? formatSavings(val, ach.target)
+                            : `${val} / ${ach.target}`;
+                          const isStarted = val > 0;
+                          return (
+                            <div key={ach.id} style={{
+                              background: isStarted ? T.card : T.surface,
+                              borderRadius:R.L, padding:"10px 12px",
+                              border:`1px solid ${isStarted ? T.border : "transparent"}`,
+                              display:"flex", alignItems:"center", gap:10,
+                              opacity: isStarted ? 1 : 0.65 }}>
+                              <div style={{ width:36, height:36, borderRadius:R.L, flexShrink:0,
+                                background:`${ach.color}15`,
+                                display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                {React.cloneElement(ACH_ICON[ach.lucide]||<Star size={20}/>,
+                                  { color: isStarted ? ach.color : T.inkGhost, strokeWidth:2 })}
+                              </div>
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ display:"flex", justifyContent:"space-between",
+                                  alignItems:"center", marginBottom:2 }}>
+                                  <span style={{ fontSize:12, fontWeight:700, color:T.ink }}>
+                                    {ach.title}
+                                  </span>
+                                  <span style={{ fontSize:10, fontWeight:700,
+                                    color: isStarted ? ach.color : T.inkGhost }}>
+                                    {displayVal}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize:10, color:T.inkLight, marginBottom:5,
+                                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                                  {ach.desc}
+                                </div>
+                                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                                  <div style={{ flex:1, background:T.border, borderRadius:99,
+                                    height:3, overflow:"hidden" }}>
+                                    <div style={{ width:`${pct*100}%`, height:"100%", borderRadius:99,
+                                      background: isStarted ? ach.color : T.border,
+                                      transition:"width 0.6s ease" }}/>
+                                  </div>
+                                  <span style={{ fontSize:9, fontWeight:700, color:T.inkGhost,
+                                    flexShrink:0 }}>+{ach.xp}xp</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // APP ROOT — Navigation controller + Onboarding gate
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -3893,10 +5501,24 @@ export default function App() {
   const [recipeModal,  setRecipeModal]  = useState(null);
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [cookedMeals,  setCookedMeals]  = useState({});
-  const [userProfile,  setUserProfile]  = useState(null);   // null = show onboarding
-  const [favorites,    setFavorites]    = useState([]);       // saved recipes
-  const [cookHistory,  setCookHistory]  = useState([]);       // {recipe, date, slot}
-  const [chatInitUrl,  setChatInitUrl]  = useState(null);   // pre-load URL in chat
+  const [userProfile,  setUserProfile]  = useState(null);
+  const [favorites,    setFavorites]    = useState([]);
+  const [cookHistory,  setCookHistory]  = useState([]);
+  const [chatInitUrl,  setChatInitUrl]  = useState(null);
+
+  // ── Streak & achievements ──────────────────────────────────────────────────
+  const [streak, setStreak] = useState({ current:3, best:7 }); // demo seeds
+  const [achStats, setAchStats] = useState({
+    totalCooked:   0,
+    vegCooked:     0,
+    highProtein:   0,
+    uniqueIds:     [],
+    repeatCounts:  {},
+    savings:       0,
+    earlyBird:     2,  // demo seeds
+    batchSessions: 1,
+    macroDays:     1,
+  });
   const { plan, swapMeal, regenerate, isLoading, snackbar, undo } = useMealPlan();
 
   const openRecipe   = (r, dayIdx=0, slot="lunch") => setRecipeModal({ recipe:r, dayIdx, slot });
@@ -3905,6 +5527,16 @@ export default function App() {
   const confirmRegen = () => { setConfirmOpen(false); regenerate(); };
 
   const [planReady, setPlanReady] = useState(false);
+  const [weekPlanSetupDone, setWeekPlanSetupDone] = useState(false);
+  const [mentaNotif,   setMentaNotif]   = useState(false);  // show floating notification
+  const [scrollToPrep, setScrollToPrep] = useState(false);  // trigger prep scroll in HomeScreen
+
+  // Show Menta notification after 30s (simulates push when app is open)
+  useEffect(() => {
+    if (!userProfile) return; // don't show during onboarding
+    const t = setTimeout(() => setMentaNotif(true), 30_000);
+    return () => clearTimeout(t);
+  }, [userProfile]);
 
   const goToChat = (url) => {
     if (url) setChatInitUrl(url);
@@ -3918,15 +5550,45 @@ export default function App() {
       setCookedMeals(prev => { const n={...prev}; delete n[key]; return n; });
     } else {
       setCookedMeals(prev => ({ ...prev, [key]: true }));
-      // Log to cook history
+
       if (recipeModal?.recipe) {
+        const r = recipeModal.recipe;
+
+        // ── Cook history
         setCookHistory(prev => [...prev, {
-          recipe: recipeModal.recipe,
-          slot: recipeModal.slot,
+          recipe: r, slot: recipeModal.slot,
           date: new Date().toLocaleDateString("es-CO", {day:"numeric",month:"short",year:"numeric"}),
           ts: Date.now(),
         }]);
+
+        // ── Streak: increment
+        setStreak(prev => {
+          const next = prev.current + 1;
+          return { current: next, best: Math.max(next, prev.best) };
+        });
+
+        // ── Achievement stats
+        setAchStats(prev => {
+          const isVeg      = r.tags?.includes("veg") || r.category === "vegan";
+          const isHighProt = (r.protein || 22) >= 25;
+          const newRepeat  = { ...prev.repeatCounts, [r.id]: (prev.repeatCounts[r.id]||0)+1 };
+          const maxRepeat  = Math.max(...Object.values(newRepeat));
+          const newUnique  = [...new Set([...prev.uniqueIds, r.id])];
+          return {
+            ...prev,
+            totalCooked:   prev.totalCooked + 1,
+            vegCooked:     prev.vegCooked   + (isVeg      ? 1 : 0),
+            highProtein:   prev.highProtein + (isHighProt ? 1 : 0),
+            uniqueIds:     newUnique,
+            uniqueCount:   newUnique.length,
+            repeatCounts:  newRepeat,
+            maxRepeat,
+            savings:       prev.savings + 7500,
+            dayStreak:     streak.current + 1,
+          };
+        });
       }
+
       closeRecipe();
       setTab("home");
     }
@@ -3939,7 +5601,9 @@ export default function App() {
 
   const renderTab = () => {
     switch(tab) {
-      case "home":     return <HomeScreen    {...commonProps} onGoToChat={goToChat} />;
+      case "home":     return <HomeScreen    {...commonProps} onGoToChat={goToChat}
+                          scrollToPrep={scrollToPrep}
+                          onScrollDone={() => setScrollToPrep(false)} />;
       case "plan":     return <WeeklyPlanScreen {...commonProps} />;
       case "chat":     return <ChatScreen userProfile={userProfile} initUrl={chatInitUrl} />;
       case "discover": return <DiscoverScreen onOpenRecipe={openRecipe} onGoToChat={goToChat}
@@ -3955,6 +5619,7 @@ export default function App() {
                             setFavorites(p=>p.find(x=>x.id===r.id)?p.filter(x=>x.id!==r.id):[...p,r]);
                           }}
                           cookHistory={cookHistory} plan={plan}
+                          streak={streak} achStats={achStats}
                           spendPerMeal={userProfile?.spendPerMeal||12000} />;
       default:         return <HomeScreen    {...commonProps} onGoToChat={goToChat} />;
     }
@@ -3974,6 +5639,7 @@ export default function App() {
         @keyframes checkRing { 0%{box-shadow:0 0 0 0 rgba(21,96,100,0.5)} 100%{box-shadow:0 0 0 10px rgba(21,96,100,0)} }
         @keyframes slideRight { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
         @keyframes slideLeft  { from{opacity:0;transform:translateX(12px)}  to{opacity:1;transform:translateX(0)} }
+        @keyframes taskMarquee { 0%,20%{transform:translateX(0)} 80%,100%{transform:translateX(var(--marquee-dist,0px))} }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:'DM Sans', sans-serif; }
         ::-webkit-scrollbar { display:none; }
       `}</style>
@@ -4004,6 +5670,18 @@ export default function App() {
           <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column",
             overflow:"hidden", borderRadius:52 }}>
 
+            {/* Menta push notification — appears after 30s */}
+            {mentaNotif && userProfile && (
+              <MentaNotification
+                taskCount={PREP_TASKS_INIT.filter(t => t.priority !== "low").length}
+                onDismiss={() => setMentaNotif(false)}
+                onTap={() => {
+                  setTab("home");
+                  setScrollToPrep(true);
+                }}
+              />
+            )}
+
             {/* Onboarding overlay — shown first time */}
             {!userProfile && (
               <OnboardingScreen onDone={profile => {
@@ -4011,6 +5689,15 @@ export default function App() {
               setPlanReady(true);
               // Plan already generated by useMealPlan on mount ✓
             }} />
+            )}
+
+            {/* Weekly plan setup overlay — shown first time user visits Mi Semana */}
+            {userProfile && tab === "plan" && !weekPlanSetupDone && (
+              <WeekPlanSetupOverlay
+                plan={plan}
+                onSwap={(dayIdx, slot) => swapMeal(dayIdx, slot)}
+                onDone={() => setWeekPlanSetupDone(true)}
+              />
             )}
 
           {/* Recipe detail overlay */}
