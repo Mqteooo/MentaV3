@@ -4,7 +4,7 @@
  * Built as a React web app inside a phone frame — all RN patterns faithfully translated.
  */
 
-import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import { Bell, MessageCircle, Home, CalendarDays, Compass, User,
          Send, Link, X, Check, ArrowLeft, Sparkles, ChefHat,
          Clock, Flame, Leaf, ShoppingCart, Mic, MicOff,
