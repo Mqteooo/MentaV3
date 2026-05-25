@@ -10,7 +10,7 @@ import { Bell, MessageCircle, Home, CalendarDays, Compass, User,
          Clock, Flame, Leaf, ShoppingCart, Mic, MicOff,
          ChevronDown, MoreHorizontal, Play, Pause, RotateCcw, RefreshCw,
          Heart, TrendingUp, Star, Award, Dumbbell, Wheat, Droplets,
-         Sunrise, Moon, Sun, Video, ClipboardList, ShoppingBasket, Utensils, Zap } from "lucide-react";
+         Sunrise, Moon, Sun, Video, ClipboardList, ShoppingBasket, Utensils, Zap, Target } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // src/store/ThemeContext  — Global Theme (Healthy Green + Action Orange)
@@ -2762,17 +2762,9 @@ function RecipeDetailScreen({ recipe, onBack, onMarkCooked, isCooked }) {
                 </div>
               ))}
             </div>
-            <div style={{ fontSize:12, color:T.inkMid, marginBottom:12, lineHeight:1.5 }}>
-              <strong>Beneficio de hoy:</strong> energía sostenida para la tarde, sin picar entre horas.
-            </div>
             <div style={{ display:"flex", gap:8 }}>
-              <button onClick={()=>setPreCookShown(true)}
-                style={{ flex:1, padding:"11px", borderRadius:R.L, border:`1.5px solid ${T.border}`,
-                  background:"transparent", color:T.inkMid, fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                Mejor luego
-              </button>
               <button onClick={()=>{ setPreCookShown(true); setCookMode(true); }}
-                style={{ flex:2, padding:"11px", borderRadius:R.L, border:"none",
+                style={{ flex:1, padding:"13px", borderRadius:R.L, border:"none",
                   background:T.orange, color:T.ink, fontSize:13, fontWeight:800, cursor:"pointer",
                   boxShadow:EL.S, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                 <ChefHat size={15} color={T.ink} strokeWidth={2}/> ¡Sí, vamos!
@@ -4677,34 +4669,40 @@ function OnboardingScreen({ onDone }) {
       })()}
     </div>,
 
-    // Step 7 — Done!
-    <div key={7} style={{ display:"flex", flexDirection:"column", flex:1 }}>
-      <div style={{ ...hdr, padding:"52px 24px 40px" }}>
-        <div style={{ animation:"mentaBounce 1.2s ease-in-out infinite" }}>
-          <MentaFace size={90} mood="happy" style={{ margin:"0 auto 18px" }} />
+    // Step 6 — Summary
+    <div key={6} style={{ display:"flex", flexDirection:"column", flex:1, overflow:"hidden" }}>
+      <div style={{ ...hdr, padding:"40px 24px 28px", flexShrink:0 }}>
+        <div style={{ animation:"mentaBounce 1.2s ease-in-out infinite", marginBottom:14 }}>
+          <MentaFace size={70} mood="happy" style={{ margin:"0 auto" }} />
         </div>
-        <h1 style={{ margin:"0 0 8px", color:"#fff", fontSize:24, fontWeight:400,
-          fontFamily:"'DM Sans', sans-serif" }}>Estamos organizando tu semana… 🌿</h1>
-        <p style={{ margin:0, color:"rgba(255,255,255,0.8)", fontSize:14, lineHeight:1.5 }}>
-          Buscando recetas fáciles y útiles para tu rutina, {name}.
+        <h1 style={{ margin:"0 0 8px", color:"#fff", fontSize:22, fontWeight:800,
+          fontFamily:"'DM Sans', sans-serif", lineHeight:1.2 }}>Estas son tus preferencias</h1>
+        <p style={{ margin:0, color:"rgba(255,255,255,0.85)", fontSize:13, lineHeight:1.6 }}>
+          Menta usará esto para planear tus recetas. Podrás cambiarlas en cualquier momento desde tu <strong style={{ color:"#fff" }}>perfil</strong>.
         </p>
       </div>
-      <div style={{ padding:"24px 20px", flex:1, display:"flex", flexDirection:"column", gap:10 }}>
+      <div style={{ flex:1, overflowY:"auto", scrollbarWidth:"none", padding:"20px 20px 8px",
+        display:"flex", flexDirection:"column", gap:10 }}>
         {[
-          { icon:"🎯", label:"Qué quieres mejorar", val: goals.length > 0 ? `${goals.length} objetivos` : "—" },
-          { icon:"🥗", label:"Cómo comes", val: ONBOARD_DIETS.find(d=>d.id===diet)?.label || "—" },
-          { icon:"⏱", label:"Tiempo para cocinar", val: ONBOARD_TIMES.find(t=>t.id===cookTime)?.label || "—" },
-          { icon:"🍱", label:"Cómo prefieres cocinar", val: planType==="batch"?"Batch cooking":planType==="daily"?"Día a día":planType==="flexible"?"Flexible":"—" },
-          { icon:"🚫", label:"Restricciones", val: allergies.length ? allergies.join(", ") : "Ninguna" },
+          { icon:<Target   size={22} color={T.green} strokeWidth={2}/>, label:"Qué quieres mejorar",   val: goals.length > 0 ? `${goals.length} objetivos` : "—" },
+          { icon:<Leaf     size={22} color={T.green} strokeWidth={2}/>, label:"Cómo comes",            val: ONBOARD_DIETS.find(d=>d.id===diet)?.label || "—" },
+          { icon:<Clock    size={22} color={T.green} strokeWidth={2}/>, label:"Tiempo para cocinar",   val: ONBOARD_TIMES.find(t=>t.id===cookTime)?.label || "—" },
+          { icon:<RefreshCw size={22} color={T.green} strokeWidth={2}/>, label:"Cómo prefieres cocinar", val: planType==="batch"?"Batch cooking":planType==="daily"?"Día a día":planType==="flexible"?"Flexible":"—" },
+          { icon:<X        size={22} color={T.red}   strokeWidth={2}/>, label:"Restricciones",         val: allergies.length ? allergies.join(", ") : "Ninguna" },
         ].map(r => (
-          <div key={r.label} style={{ ...card, display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:24 }}>{r.icon}</span>
+          <div key={r.label} style={{ ...card, display:"flex", alignItems:"center", gap:14, flexShrink:0 }}>
+            <div style={{ width:40, height:40, borderRadius:R.L, background:T.greenGhost,
+              display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              {r.icon}
+            </div>
             <div>
-              <div style={{ fontSize:11, color:T.inkLight, fontWeight:700, textTransform:"uppercase" }}>{r.label}</div>
+              <div style={{ fontSize:11, color:T.inkLight, fontWeight:700,
+                textTransform:"uppercase", letterSpacing:0.6 }}>{r.label}</div>
               <div style={{ fontSize:13, fontWeight:700, color:T.ink }}>{r.val}</div>
             </div>
           </div>
         ))}
+        <div style={{ height:8 }}/>
       </div>
     </div>,
 
