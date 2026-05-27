@@ -5639,13 +5639,14 @@ export default function App() {
       `}</style>
 
       {/* App wrapper — full responsive */}
-      <div style={{ minHeight:"100vh", background:T.surface,
-        display:"flex", flexDirection:"column", fontFamily:"'DM Sans', sans-serif" }}>
+      <div style={{ height:"100vh", background:T.surface,
+        display:"flex", flexDirection:"column", fontFamily:"'DM Sans', sans-serif",
+        overflow:"hidden" }}>
 
         {/* Screen area */}
         <div style={{ flex:1, display:"flex", flexDirection:"column",
           overflow:"hidden", maxWidth:600, width:"100%", margin:"0 auto",
-          position:"relative" }}>
+          position:"relative", minHeight:0 }}>
 
             {/* Menta push notification — appears after 30s */}
             {mentaNotif && userProfile && (
