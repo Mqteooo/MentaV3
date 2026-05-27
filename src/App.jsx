@@ -5634,6 +5634,7 @@ export default function App() {
           backdrop-filter: blur(16px) !important;
           -webkit-backdrop-filter: blur(16px) !important;
         }
+        html, body { margin:0; padding:0; height:100%; overflow:hidden; }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:'DM Sans', sans-serif; }
         ::-webkit-scrollbar { display:none; }
       `}</style>
