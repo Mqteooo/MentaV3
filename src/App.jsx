@@ -5470,6 +5470,22 @@ export default function App() {
   const [confirmOpen,  setConfirmOpen]  = useState(false);
   const [cookedMeals,  setCookedMeals]  = useState({});
   const [userProfile,  setUserProfile]  = useState(null);
+  const [splash,       setSplash]       = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://t.contentsquare.net/uxa/a6f34e320c044.js";
+    script.async = true;
+    document.head.appendChild(script);
+    return () => { if (document.head.contains(script)) document.head.removeChild(script); };
+  }, []);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFading(true), 2400);
+    const hideTimer = setTimeout(() => setSplash(false), 3000);
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, []);
   const [favorites,    setFavorites]    = useState([]);
   const [cookHistory,  setCookHistory]  = useState([]);
   const [chatInitUrl,  setChatInitUrl]  = useState(null);
@@ -5597,6 +5613,8 @@ export default function App() {
     <ThemeContext.Provider value={T}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900&display=swap');
+        @keyframes splashLogoIn { 0%{opacity:0;transform:scale(0.7)} 60%{transform:scale(1.06)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes splashTextIn { 0%{opacity:0;transform:translateY(14px)} 100%{opacity:1;transform:translateY(0)} }
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         @keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
         @keyframes videoProgress { 0%{width:0%} 100%{width:100%} }
@@ -5659,6 +5677,31 @@ export default function App() {
                   setScrollToPrep(true);
                 }}
               />
+            )}
+
+            {/* Splash screen */}
+            {splash && (
+              <div style={{
+                position:"absolute", inset:0, zIndex:9999,
+                background:T.green,
+                display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", gap:20,
+                opacity: splashFading ? 0 : 1,
+                transition:"opacity 0.6s ease",
+                pointerEvents: splashFading ? "none" : "auto"
+              }}>
+                <img src={MENTA_LOGO_B64} width={120} height={120}
+                  alt="Menta" style={{ objectFit:"contain",
+                  animation:"splashLogoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both" }} />
+                <div style={{ textAlign:"center", animation:"splashTextIn 0.5s ease 0.4s both" }}>
+                  <div style={{ fontSize:36, fontWeight:900, color:"#fff",
+                    letterSpacing:"-0.03em", lineHeight:1 }}>Menta</div>
+                  <div style={{ fontSize:14, fontWeight:500, color:"rgba(255,255,255,0.75)",
+                    marginTop:8, letterSpacing:"0.01em" }}>
+                    Tu asistente de alimentación inteligente
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Onboarding overlay — shown first time */}
